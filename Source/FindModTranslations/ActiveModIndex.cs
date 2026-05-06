@@ -35,6 +35,8 @@ namespace FindModTranslations
         private HashSet<string> activePackageIds = new HashSet<string>();
         private HashSet<string> installedSteamIds = new HashSet<string>();
         private HashSet<string> installedPackageIds = new HashSet<string>();
+        private Dictionary<string, int> activePackageCounts = new Dictionary<string, int>();
+        private Dictionary<string, int> installedPackageCounts = new Dictionary<string, int>();
         private static List<ActiveModInfo> cachedInstalledMods;
         private static DateTime cachedInstalledModsUtc = DateTime.MinValue;
         private static readonly TimeSpan InstalledModsCacheTtl = TimeSpan.FromSeconds(20);
@@ -53,17 +55,17 @@ namespace FindModTranslations
 
         public bool ContainsActiveTranslation(TranslationModInfo translation)
         {
-            return ContainsTranslation(translation, activePackageIds, activeSteamIds);
+            return ContainsTranslation(translation, activePackageIds, activeSteamIds, activePackageCounts);
         }
 
         public bool ContainsInstalledTranslation(TranslationModInfo translation)
         {
-            return ContainsTranslation(translation, installedPackageIds, installedSteamIds) || ContainsActiveTranslation(translation);
+            return ContainsTranslation(translation, installedPackageIds, installedSteamIds, installedPackageCounts) || ContainsActiveTranslation(translation);
         }
 
         public bool ContainsInactiveInstalledTranslation(TranslationModInfo translation)
         {
-            return ContainsTranslation(translation, installedPackageIds, installedSteamIds) && !ContainsActiveTranslation(translation);
+            return ContainsTranslation(translation, installedPackageIds, installedSteamIds, installedPackageCounts) && !ContainsActiveTranslation(translation);
         }
 
         public ActiveModInfo FindSourceMatch(ModTranslationEntry entry)
@@ -94,11 +96,18 @@ namespace FindModTranslations
             return null;
         }
 
-        private static bool ContainsTranslation(TranslationModInfo translation, HashSet<string> packageIds, HashSet<string> steamIds)
+        private static bool ContainsTranslation(TranslationModInfo translation, HashSet<string> packageIds, HashSet<string> steamIds, Dictionary<string, int> packageCounts)
         {
             if (translation == null) return false;
-            if (!translation.packageId.NullOrEmpty() && packageIds.Contains(SafeLower(translation.packageId))) return true;
             if (!translation.steamId.NullOrEmpty() && steamIds.Contains(translation.steamId)) return true;
+            if (!translation.packageId.NullOrEmpty())
+            {
+                string packageId = SafeLower(translation.packageId);
+                if (packageIds.Contains(packageId) && (translation.steamId.NullOrEmpty() || PackageIdIsUnambiguous(packageId, packageCounts)))
+                {
+                    return true;
+                }
+            }
             return false;
         }
 
@@ -111,6 +120,8 @@ namespace FindModTranslations
             activePackageIds.Clear();
             installedSteamIds.Clear();
             installedPackageIds.Clear();
+            activePackageCounts.Clear();
+            installedPackageCounts.Clear();
 
             foreach (ActiveModInfo mod in mods)
             {
@@ -119,11 +130,13 @@ namespace FindModTranslations
                 AddLookup(activeByName, mod.name, mod, true);
                 AddSet(activeSteamIds, mod.steamId, false);
                 AddSet(activePackageIds, mod.packageId, true);
+                AddCount(activePackageCounts, mod.packageId);
             }
             foreach (ActiveModInfo mod in installedMods)
             {
                 AddSet(installedSteamIds, mod.steamId, false);
                 AddSet(installedPackageIds, mod.packageId, true);
+                AddCount(installedPackageCounts, mod.packageId);
             }
             Signature = BuildSignature();
         }
@@ -165,6 +178,21 @@ namespace FindModTranslations
         {
             if (key.NullOrEmpty()) return;
             set.Add(lower ? SafeLower(key) : key);
+        }
+
+        private static void AddCount(Dictionary<string, int> counts, string key)
+        {
+            if (key.NullOrEmpty()) return;
+            string normalized = SafeLower(key);
+            int count;
+            counts.TryGetValue(normalized, out count);
+            counts[normalized] = count + 1;
+        }
+
+        private static bool PackageIdIsUnambiguous(string packageId, Dictionary<string, int> packageCounts)
+        {
+            int count;
+            return packageCounts == null || !packageCounts.TryGetValue(packageId, out count) || count <= 1;
         }
 
         private static List<ActiveModInfo> InstalledMods()
