@@ -1,0 +1,7 @@
+Source/**/bin/
+Source/**/obj/
+.vs/
+*.suo
+*.pdb
+__pycache__/
+*.pyc

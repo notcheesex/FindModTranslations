@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+	<FMT_Settings_ShowOnStartup>Show found translations after startup</FMT_Settings_ShowOnStartup>
+	<FMT_Settings_IgnoreActiveAlternatives>Ignore active alternative translations</FMT_Settings_IgnoreActiveAlternatives>
+	<FMT_Settings_OnlyShowWhenFound>Only auto-show when at least one translation is found</FMT_Settings_OnlyShowWhenFound>
+	<FMT_Settings_CheckNow>Check active mods now</FMT_Settings_CheckNow>
+	<FMT_Settings_DatabaseNotLoaded>not loaded</FMT_Settings_DatabaseNotLoaded>
+	<FMT_Settings_DatabaseUnavailableForLanguage>No database for language: {0}</FMT_Settings_DatabaseUnavailableForLanguage>
+	<FMT_Settings_DatabaseLoaded>Mods in database: {0}; updated: {1}</FMT_Settings_DatabaseLoaded>
+	<FMT_Settings_DatabaseLoadedUpdating>Mods in database: {0}; updated: {1}; checking database...</FMT_Settings_DatabaseLoadedUpdating>
+	<FMT_Settings_DatabaseUpdating>Checking database on GitHub...</FMT_Settings_DatabaseUpdating>
+	<FMT_Settings_DatabaseDateUnknown>unknown</FMT_Settings_DatabaseDateUnknown>
+	<FMT_Window_Title>Find Mod Translations</FMT_Window_Title>
+	<FMT_Window_NoneFound>No translations found for active mods.</FMT_Window_NoneFound>
+	<FMT_Window_Found>Found translations for active mods: {0}</FMT_Window_Found>
+	<FMT_Window_CopyFullList>Copy full list</FMT_Window_CopyFullList>
+	<FMT_Window_OpenAll>Open all</FMT_Window_OpenAll>
+	<FMT_Window_OpenAllConfirm>This will open {0} browser tabs for translations that are not installed. Continue?</FMT_Window_OpenAllConfirm>
+	<FMT_Window_OpenAllConfirmYes>Open</FMT_Window_OpenAllConfirmYes>
+	<FMT_Message_NoNotInstalled>No not-installed translation links to open.</FMT_Message_NoNotInstalled>
+	<FMT_Window_Close>Close</FMT_Window_Close>
+	<FMT_Window_NoMatchesBody>The database loaded, but none of its entries matched the current active mod list.</FMT_Window_NoMatchesBody>
+	<FMT_Window_NoLanguageDatabaseBody>No translation database was found for the current language ({0}).</FMT_Window_NoLanguageDatabaseBody>
+	<FMT_Window_Translation>Translation: {0}</FMT_Window_Translation>
+	<FMT_Window_Open>Open</FMT_Window_Open>
+	<FMT_Window_Copy>Copy link</FMT_Window_Copy>
+	<FMT_Window_CopyShort>Copy</FMT_Window_CopyShort>
+	<FMT_Window_Alternatives>Alternatives: {0}</FMT_Window_Alternatives>
+	<FMT_Window_AlternativesButton>Alternatives</FMT_Window_AlternativesButton>
+	<FMT_Message_ListCopied>Translation list copied to clipboard.</FMT_Message_ListCopied>
+	<FMT_Message_LinkCopied>Link copied to clipboard.</FMT_Message_LinkCopied>
+	<FMT_Copy_Header>Find Mod Translations</FMT_Copy_Header>
+	<FMT_Copy_Found>Found translations: {0}</FMT_Copy_Found>
+	<FMT_Copy_Translation>Translation: {0}</FMT_Copy_Translation>
+	<FMT_Copy_Alternative>Alternative: {0} - {1}</FMT_Copy_Alternative>
+	<FMT_Window_StatusActiveTranslation>Translation already active</FMT_Window_StatusActiveTranslation>
+	<FMT_Window_StatusActiveAlternative>Alternative translation active</FMT_Window_StatusActiveAlternative>
+	<FMT_Window_StatusNotInstalled>Not installed</FMT_Window_StatusNotInstalled>
+	<FMT_Window_StatusInstalledInactive>Installed, not active</FMT_Window_StatusInstalledInactive>
+	<FMT_Window_StatusInstalledAlternative>Alternative installed</FMT_Window_StatusInstalledAlternative>
+	<FMT_Window_InstalledBadge>installed</FMT_Window_InstalledBadge>
+	<FMT_Window_ActiveBadge>active</FMT_Window_ActiveBadge>
+</LanguageData>
