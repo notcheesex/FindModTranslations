@@ -58,6 +58,7 @@ namespace FindModTranslations
             listing.Gap(8f);
             if (listing.ButtonText("FMT_Settings_CheckNow".Translate()))
             {
+                RemoteDatabase.ForceRefresh(LanguageTarget.CurrentFolder());
                 ShowWindow(autoOpened: false);
             }
             listing.Gap(8f);
@@ -68,18 +69,31 @@ namespace FindModTranslations
 
         private static string DatabaseStatusText()
         {
+            string currentLanguage = LanguageTarget.CurrentFolder();
             TranslationDatabase db = DatabaseForCurrentLanguage();
-            bool updating = RemoteDatabase.IsRefreshing(LanguageTarget.CurrentFolder());
+            bool updating = RemoteDatabase.IsRefreshing(currentLanguage);
+            string remoteError = RemoteDatabase.LastError(currentLanguage);
             if (db == null)
             {
-                return updating ? "FMT_Settings_DatabaseUpdating".Translate().ToString() : "FMT_Settings_DatabaseNotLoaded".Translate().ToString();
+                string text = updating ? "FMT_Settings_DatabaseUpdating".Translate().ToString() : "FMT_Settings_DatabaseNotLoaded".Translate().ToString();
+                return DatabaseStatusWithRemoteError(text, remoteError, updating);
             }
             if (db.unavailableForRequestedLanguage)
             {
-                return updating ? "FMT_Settings_DatabaseUpdating".Translate().ToString() : "FMT_Settings_DatabaseUnavailableForLanguage".Translate(db.LanguageDisplayName).ToString();
+                string text = updating ? "FMT_Settings_DatabaseUpdating".Translate().ToString() : "FMT_Settings_DatabaseUnavailableForLanguage".Translate(db.LanguageDisplayName).ToString();
+                return DatabaseStatusWithRemoteError(text, remoteError, updating);
             }
             string updatedAt = db.updatedAt.NullOrEmpty() ? "FMT_Settings_DatabaseDateUnknown".Translate().ToString() : db.updatedAt;
-            return (updating ? "FMT_Settings_DatabaseLoadedUpdating" : "FMT_Settings_DatabaseLoaded").Translate(db.ModCount, updatedAt).ToString();
+            return DatabaseStatusWithRemoteError((updating ? "FMT_Settings_DatabaseLoadedUpdating" : "FMT_Settings_DatabaseLoaded").Translate(db.ModCount, updatedAt).ToString(), remoteError, updating);
+        }
+
+        private static string DatabaseStatusWithRemoteError(string text, string remoteError, bool updating)
+        {
+            if (updating || remoteError.NullOrEmpty())
+            {
+                return text;
+            }
+            return text + "\n" + "FMT_Settings_DatabaseRemoteError".Translate(remoteError);
         }
 
         public static void TryAutoShowFromMainMenu()

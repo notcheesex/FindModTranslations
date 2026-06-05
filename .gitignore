@@ -5,3 +5,11 @@ Source/**/obj/
 *.pdb
 __pycache__/
 *.pyc
+.omx/
+.playwright-cli/
+Cache/
+Data/
+Docs/
+References/
+Reports/
+Tools/

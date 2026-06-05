@@ -9,6 +9,7 @@
 	<FMT_Settings_DatabaseLoaded>Mods in database: {0}; updated: {1}</FMT_Settings_DatabaseLoaded>
 	<FMT_Settings_DatabaseLoadedUpdating>Mods in database: {0}; updated: {1}; checking database...</FMT_Settings_DatabaseLoadedUpdating>
 	<FMT_Settings_DatabaseUpdating>Checking database on GitHub...</FMT_Settings_DatabaseUpdating>
+	<FMT_Settings_DatabaseRemoteError>Last remote check failed: {0}</FMT_Settings_DatabaseRemoteError>
 	<FMT_Settings_DatabaseDateUnknown>unknown</FMT_Settings_DatabaseDateUnknown>
 	<FMT_Window_Title>Find Mod Translations</FMT_Window_Title>
 	<FMT_Window_NoneFound>No translations found for active mods.</FMT_Window_NoneFound>

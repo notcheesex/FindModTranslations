@@ -40,6 +40,9 @@ namespace FindModTranslations
         private static List<ActiveModInfo> cachedInstalledMods;
         private static DateTime cachedInstalledModsUtc = DateTime.MinValue;
         private static readonly TimeSpan InstalledModsCacheTtl = TimeSpan.FromSeconds(20);
+        private static readonly object CacheGate = new object();
+        private static readonly Dictionary<string, BuiltInLanguageCacheEntry> builtInLanguageCache = new Dictionary<string, BuiltInLanguageCacheEntry>();
+        private static readonly Dictionary<string, LocalModCacheEntry> localModCache = new Dictionary<string, LocalModCacheEntry>();
 
         public static ActiveModIndex Create(string[] targetLanguageFolders)
         {
@@ -155,7 +158,7 @@ namespace FindModTranslations
         {
             foreach (ActiveModInfo mod in list)
             {
-                builder.Append(SafeLower(mod.packageId)).Append('@').Append(mod.steamId ?? "").Append(';');
+                builder.Append(SafeLower(mod.packageId)).Append('@').Append(mod.steamId ?? "").Append('#').Append(mod.builtInTargetLanguageEntries).Append(';');
             }
         }
 
@@ -237,13 +240,21 @@ namespace FindModTranslations
             {
                 string modsRoot = GenFilePaths.ModsFolderPath;
                 if (modsRoot.NullOrEmpty() || !Directory.Exists(modsRoot)) return;
+                HashSet<string> knownPackageIds = new HashSet<string>();
+                foreach (ActiveModInfo mod in result)
+                {
+                    if (!mod.packageId.NullOrEmpty())
+                    {
+                        knownPackageIds.Add(SafeLower(mod.packageId));
+                    }
+                }
                 foreach (string dir in Directory.GetDirectories(modsRoot))
                 {
                     try
                     {
                         ActiveModInfo info = AboutXmlMod(dir);
                         if (info == null || info.packageId.NullOrEmpty()) continue;
-                        if (!result.Any(m => SafeLower(m.packageId) == SafeLower(info.packageId)))
+                        if (knownPackageIds.Add(SafeLower(info.packageId)))
                         {
                             result.Add(info);
                         }
@@ -264,17 +275,33 @@ namespace FindModTranslations
         {
             string about = Path.Combine(rootDir, "About", "About.xml");
             if (!File.Exists(about)) return null;
+            string cacheKey = SafeLower(rootDir);
+            string stamp = FileStamp(about) + "|" + FileStamp(PublishedFileIdPath(rootDir));
+            lock (CacheGate)
+            {
+                LocalModCacheEntry cached;
+                if (localModCache.TryGetValue(cacheKey, out cached) && cached.stamp == stamp)
+                {
+                    return cached.info;
+                }
+            }
+
             XmlDocument document = new XmlDocument();
             document.XmlResolver = null;
             document.Load(about);
             string name = XmlText(document, "name");
             string packageId = XmlText(document, "packageId");
-            return new ActiveModInfo
+            ActiveModInfo info = new ActiveModInfo
             {
                 name = name.NullOrEmpty() ? Path.GetFileName(rootDir) : name,
                 packageId = SafeLower(packageId),
                 steamId = PublishedFileId(rootDir)
             };
+            lock (CacheGate)
+            {
+                localModCache[cacheKey] = new LocalModCacheEntry(stamp, info);
+            }
+            return info;
         }
 
         private static string XmlText(XmlDocument document, string tag)
@@ -285,9 +312,26 @@ namespace FindModTranslations
 
         private static string PublishedFileId(string rootDir)
         {
+            string path = PublishedFileIdPath(rootDir);
+            return path.NullOrEmpty() ? "" : File.ReadAllText(path).Trim();
+        }
+
+        private static string PublishedFileIdPath(string rootDir)
+        {
             string path = Path.Combine(rootDir, "About", "PublishedFileId.txt");
-            if (!File.Exists(path)) path = Path.Combine(rootDir, "PublishedFileId.txt");
-            return File.Exists(path) ? File.ReadAllText(path).Trim() : "";
+            if (File.Exists(path)) return path;
+            path = Path.Combine(rootDir, "PublishedFileId.txt");
+            return File.Exists(path) ? path : "";
+        }
+
+        private static string FileStamp(string path)
+        {
+            if (path.NullOrEmpty() || !File.Exists(path))
+            {
+                return "missing";
+            }
+            FileInfo info = new FileInfo(path);
+            return info.LastWriteTimeUtc.Ticks + ":" + info.Length;
         }
 
         private static ActiveModInfo ActiveModMeta(object meta)
@@ -340,22 +384,27 @@ namespace FindModTranslations
             {
                 string root = mod.RootDir;
                 if (root.NullOrEmpty() || !Directory.Exists(root)) return 0;
-                int count = 0;
-                foreach (string targetLanguageFolder in targetLanguageFolders ?? new string[0])
+                List<string> languageFiles;
+                string stamp = BuiltInLanguageStamp(root, targetLanguageFolders, out languageFiles);
+                string cacheKey = BuiltInLanguageCacheKey(root, targetLanguageFolders);
+                lock (CacheGate)
                 {
-                    string safeFolder = LanguageTarget.SafeFolderName(targetLanguageFolder);
-                    if (safeFolder.NullOrEmpty()) continue;
-                    DirectoryInfo language = new DirectoryInfo(Path.Combine(root, "Languages", safeFolder));
-                    if (!language.Exists) continue;
-                    foreach (FileInfo file in language.EnumerateFiles("*.xml", SearchOption.AllDirectories))
+                    BuiltInLanguageCacheEntry cached;
+                    if (builtInLanguageCache.TryGetValue(cacheKey, out cached) && cached.stamp == stamp)
                     {
-                        if (file.FullName.IndexOf(Path.DirectorySeparatorChar + "WordInfo" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            continue;
-                        }
-                        count += CountLanguageDataEntries(file.FullName);
-                        if (count > 0) return count;
+                        return cached.count;
                     }
+                }
+
+                int count = 0;
+                foreach (string file in languageFiles)
+                {
+                    count += CountLanguageDataEntries(file);
+                    if (count > 0) break;
+                }
+                lock (CacheGate)
+                {
+                    builtInLanguageCache[cacheKey] = new BuiltInLanguageCacheEntry(stamp, count);
                 }
                 return count;
             }
@@ -363,6 +412,57 @@ namespace FindModTranslations
             {
                 return 0;
             }
+        }
+
+        private static string BuiltInLanguageStamp(string root, string[] targetLanguageFolders, out List<string> languageFiles)
+        {
+            languageFiles = new List<string>();
+            StringBuilder builder = new StringBuilder();
+            foreach (string targetLanguageFolder in targetLanguageFolders ?? new string[0])
+            {
+                string safeFolder = LanguageTarget.SafeFolderName(targetLanguageFolder);
+                if (safeFolder.NullOrEmpty()) continue;
+                string languageRoot = Path.Combine(root, "Languages", safeFolder);
+                builder.Append(SafeLower(safeFolder)).Append('=');
+                if (!Directory.Exists(languageRoot))
+                {
+                    builder.Append("missing;");
+                    continue;
+                }
+
+                foreach (string path in Directory.EnumerateFiles(languageRoot, "*.xml", SearchOption.AllDirectories).Where(p => !IsWordInfoPath(p)).OrderBy(p => p, StringComparer.OrdinalIgnoreCase))
+                {
+                    FileInfo info = new FileInfo(path);
+                    languageFiles.Add(path);
+                    builder.Append(path).Append(':').Append(info.LastWriteTimeUtc.Ticks).Append(':').Append(info.Length).Append(';');
+                }
+            }
+            return builder.ToString();
+        }
+
+        private static string BuiltInLanguageCacheKey(string root, string[] targetLanguageFolders)
+        {
+            return SafeLower(root) + "|" + LanguageFoldersKey(targetLanguageFolders);
+        }
+
+        private static string LanguageFoldersKey(string[] targetLanguageFolders)
+        {
+            StringBuilder builder = new StringBuilder();
+            foreach (string targetLanguageFolder in targetLanguageFolders ?? new string[0])
+            {
+                string safeFolder = LanguageTarget.SafeFolderName(targetLanguageFolder);
+                if (!safeFolder.NullOrEmpty())
+                {
+                    builder.Append(SafeLower(safeFolder)).Append(';');
+                }
+            }
+            return builder.ToString();
+        }
+
+        private static bool IsWordInfoPath(string path)
+        {
+            return path.IndexOf(Path.DirectorySeparatorChar + "WordInfo" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) >= 0
+                || path.IndexOf(Path.AltDirectorySeparatorChar + "WordInfo" + Path.AltDirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private static int CountLanguageDataEntries(string path)
@@ -421,6 +521,30 @@ namespace FindModTranslations
             catch
             {
                 return "";
+            }
+        }
+
+        private class BuiltInLanguageCacheEntry
+        {
+            public readonly string stamp;
+            public readonly int count;
+
+            public BuiltInLanguageCacheEntry(string stamp, int count)
+            {
+                this.stamp = stamp;
+                this.count = count;
+            }
+        }
+
+        private class LocalModCacheEntry
+        {
+            public readonly string stamp;
+            public readonly ActiveModInfo info;
+
+            public LocalModCacheEntry(string stamp, ActiveModInfo info)
+            {
+                this.stamp = stamp;
+                this.info = info;
             }
         }
 

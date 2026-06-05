@@ -1,6 +1,7 @@
 using RimWorld;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -253,8 +254,11 @@ namespace FindModTranslations
             string dataRoot = Path.Combine(content.RootDir, "Data");
             string cacheRoot = RemoteDatabase.CacheRoot();
             List<string> skippedLanguages = new List<string>();
+            List<LoadedDatabaseCandidate> loadedCandidates = new List<LoadedDatabaseCandidate>();
+            int candidateOrder = 0;
             foreach (DatabaseCandidate candidate in DatabaseCandidates(cacheRoot, requestedLanguage).Concat(DatabaseCandidates(dataRoot, requestedLanguage)))
             {
+                int order = candidateOrder++;
                 if (!File.Exists(candidate.path))
                 {
                     continue;
@@ -271,13 +275,20 @@ namespace FindModTranslations
                         continue;
                     }
 
-                    Log.Message("[Find Mod Translations] Loaded database: " + db.ModCount + " mods, language " + db.LanguageDisplayName + ", version " + db.version + " from " + Path.GetFileName(candidate.path) + ".");
-                    return db;
+                    loadedCandidates.Add(new LoadedDatabaseCandidate(db, candidate.path, order));
                 }
                 catch (Exception ex)
                 {
                     Log.Error("[Find Mod Translations] Could not read translation database " + candidate.path + ": " + ex);
                 }
+            }
+
+            if (loadedCandidates.Count > 0)
+            {
+                LoadedDatabaseCandidate selected = NewestDatabase(loadedCandidates);
+                TranslationDatabase db = selected.database;
+                Log.Message("[Find Mod Translations] Loaded database: " + db.ModCount + " mods, language " + db.LanguageDisplayName + ", version " + db.version + " from " + Path.GetFileName(selected.path) + ".");
+                return db;
             }
 
             TranslationDatabase empty = EmptyForLanguage(requestedLanguage);
@@ -369,6 +380,73 @@ namespace FindModTranslations
             yield return new DatabaseCandidate(Path.Combine(dataRoot, "translations.json"), "");
         }
 
+        private static LoadedDatabaseCandidate NewestDatabase(List<LoadedDatabaseCandidate> candidates)
+        {
+            LoadedDatabaseCandidate selected = candidates[0];
+            for (int i = 1; i < candidates.Count; i++)
+            {
+                if (CompareDatabaseFreshness(candidates[i], selected) > 0)
+                {
+                    selected = candidates[i];
+                }
+            }
+            return selected;
+        }
+
+        private static int CompareDatabaseFreshness(LoadedDatabaseCandidate a, LoadedDatabaseCandidate b)
+        {
+            int updatedAt = CompareUpdatedAt(a.updatedAtUtc, b.updatedAtUtc);
+            if (updatedAt != 0)
+            {
+                return updatedAt;
+            }
+
+            int version = a.database.version.CompareTo(b.database.version);
+            if (version != 0)
+            {
+                return version;
+            }
+
+            return b.order.CompareTo(a.order);
+        }
+
+        private static int CompareUpdatedAt(DateTime? a, DateTime? b)
+        {
+            if (a.HasValue && b.HasValue)
+            {
+                return DateTime.Compare(a.Value, b.Value);
+            }
+            if (a.HasValue)
+            {
+                return 1;
+            }
+            if (b.HasValue)
+            {
+                return -1;
+            }
+            return 0;
+        }
+
+        private static DateTime? ParseUpdatedAt(string value)
+        {
+            string text = (value ?? "").Trim();
+            if (text.NullOrEmpty())
+            {
+                return null;
+            }
+
+            DateTime parsed;
+            if (DateTime.TryParseExact(text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out parsed))
+            {
+                return parsed;
+            }
+            if (DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out parsed))
+            {
+                return parsed;
+            }
+            return null;
+        }
+
         private static void AddFolderAndCandidates(List<string> folders, string folder)
         {
             foreach (string candidate in LanguageTarget.CandidateFolders(folder))
@@ -386,6 +464,22 @@ namespace FindModTranslations
             {
                 this.path = path;
                 this.inferredLanguageFolder = inferredLanguageFolder;
+            }
+        }
+
+        private class LoadedDatabaseCandidate
+        {
+            public readonly TranslationDatabase database;
+            public readonly string path;
+            public readonly int order;
+            public readonly DateTime? updatedAtUtc;
+
+            public LoadedDatabaseCandidate(TranslationDatabase database, string path, int order)
+            {
+                this.database = database;
+                this.path = path;
+                this.order = order;
+                updatedAtUtc = ParseUpdatedAt(database.updatedAt);
             }
         }
     }

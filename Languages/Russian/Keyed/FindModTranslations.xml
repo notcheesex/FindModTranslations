@@ -9,6 +9,7 @@
 	<FMT_Settings_DatabaseLoaded>Модов в базе: {0}; обновлена: {1}</FMT_Settings_DatabaseLoaded>
 	<FMT_Settings_DatabaseLoadedUpdating>Модов в базе: {0}; обновлена: {1}; проверка базы...</FMT_Settings_DatabaseLoadedUpdating>
 	<FMT_Settings_DatabaseUpdating>Проверка базы на GitHub...</FMT_Settings_DatabaseUpdating>
+	<FMT_Settings_DatabaseRemoteError>Последняя удаленная проверка не удалась: {0}</FMT_Settings_DatabaseRemoteError>
 	<FMT_Settings_DatabaseDateUnknown>неизвестно</FMT_Settings_DatabaseDateUnknown>
 	<FMT_Window_Title>Find Mod Translations</FMT_Window_Title>
 	<FMT_Window_NoneFound>Для активных модов переводы не найдены.</FMT_Window_NoneFound>
