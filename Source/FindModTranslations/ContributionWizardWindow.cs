@@ -15,7 +15,7 @@ namespace FindModTranslations
     public class ContributionWizardWindow : Window
     {
         private const string DatabaseGithubUrl = "https://github.com/notcheesex/FindModTranslations-Database";
-        private const float RowHeight = 292f;
+        private const float RowHeight = 320f;
 
         private readonly List<ContributionDraft> drafts;
         private readonly ExistingSourceIndex existingSources;
@@ -30,7 +30,7 @@ namespace FindModTranslations
         private volatile string scanError;
         private ActiveModIndex pendingScanIndex;
 
-        public override Vector2 InitialSize => new Vector2(940f, 720f);
+        public override Vector2 InitialSize => new Vector2(1040f, 760f);
 
         public ContributionWizardWindow(TranslationDatabase database)
         {
@@ -55,7 +55,7 @@ namespace FindModTranslations
             DrawScanStatus(new Rect(inRect.x, inRect.y + 90f, inRect.width, 22f));
             Widgets.Label(new Rect(inRect.x, inRect.y + 116f, inRect.width, 24f), "FMT_Contribution_Detected".Translate(drafts.Count, UsableDrafts().Count));
 
-            Rect listOuter = new Rect(inRect.x, inRect.y + 144f, inRect.width, inRect.height - 232f);
+            Rect listOuter = new Rect(inRect.x, inRect.y + 144f, inRect.width, inRect.height - 242f);
             float viewHeight = Math.Max(listOuter.height - 20f, drafts.Count * RowHeight + 8f);
             Rect view = new Rect(0f, 0f, listOuter.width - 18f, viewHeight);
             Widgets.BeginScrollView(listOuter, ref scroll, view);
@@ -534,27 +534,31 @@ namespace FindModTranslations
                 GUI.color = saved;
             }
 
-            Widgets.Label(new Rect(left, top + 58f, contentWidth, 24f), "FMT_Contribution_Source".Translate());
-            float fieldY = top + 84f;
-            float nameWidth = 286f;
-            float packageWidth = 286f;
-            float steamWidth = 142f;
-            float versionsWidth = Math.Max(118f, contentWidth - nameWidth - packageWidth - steamWidth - 24f);
-            draft.sourceName = DrawField(new Rect(left, fieldY, nameWidth, 52f), "FMT_Contribution_SourceName".Translate(), draft.sourceName);
-            draft.sourcePackageId = DrawField(new Rect(left + nameWidth + 8f, fieldY, packageWidth, 52f), "FMT_Contribution_SourcePackageId".Translate(), draft.sourcePackageId);
-            draft.sourceSteamId = DrawField(new Rect(left + nameWidth + packageWidth + 16f, fieldY, steamWidth, 52f), "FMT_Contribution_SourceSteamId".Translate(), draft.sourceSteamId);
-            draft.sourceGameVersions = DrawField(new Rect(left + nameWidth + packageWidth + steamWidth + 24f, fieldY, versionsWidth, 52f), "FMT_Contribution_SourceGameVersions".Translate(), draft.sourceGameVersions);
+            Widgets.Label(new Rect(left, top + 60f, contentWidth, 24f), "FMT_Contribution_Source".Translate());
+            float fieldY = top + 88f;
+            float fieldHeight = 54f;
+            float sourceGap = 8f;
+            float sourceAvailable = contentWidth - sourceGap * 3f;
+            float steamWidth = Math.Min(150f, sourceAvailable * 0.16f);
+            float sourceRemaining = sourceAvailable - steamWidth;
+            float nameWidth = sourceRemaining * 0.36f;
+            float packageWidth = sourceRemaining * 0.36f;
+            float versionsWidth = sourceRemaining - nameWidth - packageWidth;
+            draft.sourceName = DrawField(new Rect(left, fieldY, nameWidth, fieldHeight), "FMT_Contribution_SourceName".Translate(), draft.sourceName);
+            draft.sourcePackageId = DrawField(new Rect(left + nameWidth + sourceGap, fieldY, packageWidth, fieldHeight), "FMT_Contribution_SourcePackageId".Translate(), draft.sourcePackageId);
+            draft.sourceSteamId = DrawField(new Rect(left + nameWidth + packageWidth + sourceGap * 2f, fieldY, steamWidth, fieldHeight), "FMT_Contribution_SourceSteamId".Translate(), draft.sourceSteamId);
+            draft.sourceGameVersions = DrawField(new Rect(left + nameWidth + packageWidth + steamWidth + sourceGap * 3f, fieldY, versionsWidth, fieldHeight), "FMT_Contribution_SourceGameVersions".Translate(), draft.sourceGameVersions);
 
-            Widgets.Label(new Rect(left, top + 144f, contentWidth, 24f), "FMT_Contribution_Translation".Translate());
-            fieldY = top + 170f;
-            float translationNameWidth = 354f;
-            float translationPackageWidth = Math.Max(240f, contentWidth - translationNameWidth - 8f);
-            float linkWidth = Math.Max(260f, contentWidth - steamWidth - 8f);
-            draft.translationName = DrawField(new Rect(left, fieldY, translationNameWidth, 52f), "FMT_Contribution_TranslationName".Translate(), draft.translationName);
-            draft.translationPackageId = DrawField(new Rect(left + translationNameWidth + 8f, fieldY, translationPackageWidth, 52f), "FMT_Contribution_TranslationPackageId".Translate(), draft.translationPackageId);
-            fieldY += 58f;
-            draft.translationSteamId = DrawField(new Rect(left, fieldY, steamWidth, 52f), "FMT_Contribution_TranslationSteamId".Translate(), draft.translationSteamId);
-            draft.translationUrl = DrawField(new Rect(left + steamWidth + 8f, fieldY, linkWidth, 52f), "FMT_Contribution_TranslationUrl".Translate(), draft.translationUrl);
+            Widgets.Label(new Rect(left, top + 154f, contentWidth, 24f), "FMT_Contribution_Translation".Translate());
+            fieldY = top + 182f;
+            float translationNameWidth = Math.Min(390f, (contentWidth - sourceGap) * 0.48f);
+            float translationPackageWidth = contentWidth - translationNameWidth - sourceGap;
+            float linkWidth = contentWidth - steamWidth - sourceGap;
+            draft.translationName = DrawField(new Rect(left, fieldY, translationNameWidth, fieldHeight), "FMT_Contribution_TranslationName".Translate(), draft.translationName);
+            draft.translationPackageId = DrawField(new Rect(left + translationNameWidth + sourceGap, fieldY, translationPackageWidth, fieldHeight), "FMT_Contribution_TranslationPackageId".Translate(), draft.translationPackageId);
+            fieldY += 60f;
+            draft.translationSteamId = DrawField(new Rect(left, fieldY, steamWidth, fieldHeight), "FMT_Contribution_TranslationSteamId".Translate(), draft.translationSteamId);
+            draft.translationUrl = DrawField(new Rect(left + steamWidth + sourceGap, fieldY, linkWidth, fieldHeight), "FMT_Contribution_TranslationUrl".Translate(), draft.translationUrl);
 
             y += RowHeight;
         }
