@@ -530,9 +530,9 @@ namespace FindModTranslations
             {
                 name = mod.Name ?? "<unnamed>",
                 packageId = SafeLower(mod.PackageId),
-                steamId = PublishedId(mod, root),
+                steamId = countTargetLanguage ? PublishedId(mod, root) : PublishedIdFromLoadedMod(mod),
                 rootDir = root,
-                gameVersions = SupportedVersionsFromAbout(root),
+                gameVersions = countTargetLanguage ? SupportedVersionsFromAbout(root) : new string[0],
                 builtInTargetLanguageEntries = targetLanguageEntries,
                 hasBuiltInTargetLanguage = targetLanguageEntries > 0
             };
@@ -676,6 +676,16 @@ namespace FindModTranslations
 
         private static string PublishedId(ModContentPack mod, string rootDir)
         {
+            string id = PublishedIdFromLoadedMod(mod);
+            if (IsValidSteamId(id))
+            {
+                return id;
+            }
+            return rootDir.NullOrEmpty() ? "" : PublishedFileId(rootDir);
+        }
+
+        private static string PublishedIdFromLoadedMod(ModContentPack mod)
+        {
             try
             {
                 MethodInfo method = typeof(ModContentPack).GetMethod("GetPublishedFileId", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -689,7 +699,7 @@ namespace FindModTranslations
             catch
             {
             }
-            return rootDir.NullOrEmpty() ? "" : PublishedFileId(rootDir);
+            return "";
         }
 
         private static string WorkshopIdFromPath(string rootDir)
