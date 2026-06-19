@@ -58,7 +58,6 @@
 	<FMT_Contribution_AddManual>Add manual row</FMT_Contribution_AddManual>
 	<FMT_Contribution_CopyJson>Copy JSON</FMT_Contribution_CopyJson>
 	<FMT_Contribution_OpenGithub>Open GitHub</FMT_Contribution_OpenGithub>
-	<FMT_Contribution_CopySteamPost>Copy Steam post text</FMT_Contribution_CopySteamPost>
 	<FMT_Contribution_Included>Included</FMT_Contribution_Included>
 	<FMT_Contribution_Skipped>Skipped</FMT_Contribution_Skipped>
 	<FMT_Contribution_ReasonLanguageAndName>Detected by {0} {1} language entries and a translation-like name/packageId.</FMT_Contribution_ReasonLanguageAndName>
@@ -68,11 +67,9 @@
 	<FMT_Contribution_MissingSourceIdentity>Need a source name, packageId, or Steam ID before this row can be copied.</FMT_Contribution_MissingSourceIdentity>
 	<FMT_Contribution_MissingTranslationLink>Need a translation Steam ID or safe Steam Workshop URL before this row can be copied.</FMT_Contribution_MissingTranslationLink>
 	<FMT_Contribution_TranslationLinkHint>Recommended: add the translation Steam ID or a safe Steam Workshop URL for database review.</FMT_Contribution_TranslationLinkHint>
-	<FMT_Contribution_SubmitHelp>Copy JSON for a GitHub database PR, issue, or discussion. The Steam button copies post text to the clipboard; it does not open a Steam discussion.</FMT_Contribution_SubmitHelp>
+	<FMT_Contribution_SubmitHelp>Copy JSON for the GitHub database repo, then open GitHub to submit it in a PR or issue.</FMT_Contribution_SubmitHelp>
 	<FMT_Contribution_NoJson>No included rows have enough source and translation data.</FMT_Contribution_NoJson>
 	<FMT_Contribution_JsonCopied>Database JSON copied to clipboard.</FMT_Contribution_JsonCopied>
 	<FMT_Contribution_GithubOpened>GitHub database page opened.</FMT_Contribution_GithubOpened>
 	<FMT_Contribution_GithubOpenedCopied>Database JSON copied; GitHub database page opened.</FMT_Contribution_GithubOpenedCopied>
-	<FMT_Contribution_SteamPostHeader>Find Mod Translations contribution for {0}. Please add these translation entries to the database:</FMT_Contribution_SteamPostHeader>
-	<FMT_Contribution_SteamPostCopied>Steam discussion post text copied to clipboard. Paste it into the mod discussion.</FMT_Contribution_SteamPostCopied>
 </LanguageData>

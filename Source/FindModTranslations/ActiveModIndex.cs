@@ -298,7 +298,7 @@ namespace FindModTranslations
             string about = Path.Combine(rootDir, "About", "About.xml");
             if (!File.Exists(about)) return null;
             string cacheKey = SafeLower(rootDir);
-            string stamp = FileStamp(about) + "|" + FileStamp(PublishedFileIdPath(rootDir));
+            string stamp = FileStamp(about) + "|" + FileStamp(PublishedFileIdPath(rootDir)) + "|" + FileStamp(LoadFoldersPath(rootDir));
             lock (CacheGate)
             {
                 LocalModCacheEntry cached;
@@ -319,7 +319,7 @@ namespace FindModTranslations
                 packageId = SafeLower(packageId),
                 steamId = PublishedFileId(rootDir),
                 rootDir = rootDir,
-                gameVersions = SupportedVersions(document)
+                gameVersions = SupportedVersions(document, rootDir)
             };
             lock (CacheGate)
             {
@@ -328,26 +328,25 @@ namespace FindModTranslations
             return info;
         }
 
-        private static string[] SupportedVersions(XmlDocument document)
+        private static string[] SupportedVersions(XmlDocument document, string rootDir)
         {
+            List<string> result = new List<string>();
             XmlNode versions = document.SelectSingleNode("/ModMetaData/supportedVersions");
-            if (versions == null)
+            if (versions != null)
             {
-                return new string[0];
+                foreach (XmlNode node in versions.ChildNodes)
+                {
+                    if (node.NodeType != XmlNodeType.Element)
+                    {
+                        continue;
+                    }
+                    AddVersion(result, (node.InnerText ?? "").Trim());
+                }
             }
 
-            List<string> result = new List<string>();
-            foreach (XmlNode node in versions.ChildNodes)
+            foreach (string version in LoadFolderVersions(rootDir))
             {
-                if (node.NodeType != XmlNodeType.Element)
-                {
-                    continue;
-                }
-                string value = (node.InnerText ?? "").Trim();
-                if (!value.NullOrEmpty())
-                {
-                    result.Add(value);
-                }
+                AddVersion(result, version);
             }
             return result.ToArray();
         }
@@ -365,7 +364,7 @@ namespace FindModTranslations
                 XmlDocument document = new XmlDocument();
                 document.XmlResolver = null;
                 document.Load(about);
-                return SupportedVersions(document);
+                return SupportedVersions(document, rootDir);
             }
             catch
             {
@@ -382,7 +381,12 @@ namespace FindModTranslations
         private static string PublishedFileId(string rootDir)
         {
             string path = PublishedFileIdPath(rootDir);
-            return path.NullOrEmpty() ? "" : File.ReadAllText(path).Trim();
+            string id = path.NullOrEmpty() ? "" : File.ReadAllText(path).Trim();
+            if (!IsValidSteamId(id))
+            {
+                id = WorkshopIdFromPath(rootDir);
+            }
+            return id;
         }
 
         private static string PublishedFileIdPath(string rootDir)
@@ -390,6 +394,16 @@ namespace FindModTranslations
             string path = Path.Combine(rootDir, "About", "PublishedFileId.txt");
             if (File.Exists(path)) return path;
             path = Path.Combine(rootDir, "PublishedFileId.txt");
+            return File.Exists(path) ? path : "";
+        }
+
+        private static string LoadFoldersPath(string rootDir)
+        {
+            if (rootDir.NullOrEmpty())
+            {
+                return "";
+            }
+            string path = Path.Combine(rootDir, "LoadFolders.xml");
             return File.Exists(path) ? path : "";
         }
 
@@ -405,13 +419,24 @@ namespace FindModTranslations
 
         private static ActiveModInfo ActiveModMeta(object meta)
         {
+            string rootDir = FirstStringMember(meta, "RootDir", "rootDir", "Folder", "folder") ?? "";
+            string steamId = FirstStringMember(meta, "PublishedFileId", "publishedFileId") ?? "";
+            if (!IsValidSteamId(steamId) && !rootDir.NullOrEmpty())
+            {
+                steamId = PublishedFileId(rootDir);
+            }
+            string[] versions = StringArrayMember(meta, "SupportedVersions", "supportedVersions", "SupportedVersionsReadOnly", "supportedVersionsReadOnly");
+            if ((versions == null || versions.Length == 0) && !rootDir.NullOrEmpty())
+            {
+                versions = SupportedVersionsFromAbout(rootDir);
+            }
             return new ActiveModInfo
             {
                 name = FirstStringMember(meta, "Name", "name") ?? "<unnamed>",
                 packageId = SafeLower(FirstStringMember(meta, "PackageId", "packageId", "PackageIdNonUnique") ?? ""),
-                steamId = FirstStringMember(meta, "PublishedFileId", "publishedFileId") ?? "",
-                rootDir = FirstStringMember(meta, "RootDir", "rootDir", "Folder", "folder") ?? "",
-                gameVersions = StringArrayMember(meta, "SupportedVersions", "supportedVersions", "SupportedVersionsReadOnly", "supportedVersionsReadOnly"),
+                steamId = steamId,
+                rootDir = rootDir,
+                gameVersions = versions ?? new string[0],
                 meta = meta
             };
         }
@@ -505,9 +530,9 @@ namespace FindModTranslations
             {
                 name = mod.Name ?? "<unnamed>",
                 packageId = SafeLower(mod.PackageId),
-                steamId = PublishedId(mod),
+                steamId = PublishedId(mod, root),
                 rootDir = root,
-                gameVersions = countTargetLanguage ? SupportedVersionsFromAbout(root) : new string[0],
+                gameVersions = SupportedVersionsFromAbout(root),
                 builtInTargetLanguageEntries = targetLanguageEntries,
                 hasBuiltInTargetLanguage = targetLanguageEntries > 0
             };
@@ -649,18 +674,78 @@ namespace FindModTranslations
             return count;
         }
 
-        private static string PublishedId(ModContentPack mod)
+        private static string PublishedId(ModContentPack mod, string rootDir)
         {
             try
             {
                 MethodInfo method = typeof(ModContentPack).GetMethod("GetPublishedFileId", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 object value = method == null ? null : method.Invoke(mod, null);
                 string id = value == null ? "" : value.ToString();
-                return id == "0" ? "" : id;
+                if (IsValidSteamId(id))
+                {
+                    return id;
+                }
             }
             catch
             {
+            }
+            return rootDir.NullOrEmpty() ? "" : PublishedFileId(rootDir);
+        }
+
+        private static string WorkshopIdFromPath(string rootDir)
+        {
+            if (rootDir.NullOrEmpty())
+            {
                 return "";
+            }
+            Match match = Regex.Match(rootDir.Replace('\\', '/'), @"/workshop/content/294100/(\d{6,})(?:/|$)", RegexOptions.IgnoreCase);
+            return match.Success ? match.Groups[1].Value : "";
+        }
+
+        private static bool IsValidSteamId(string value)
+        {
+            return Regex.IsMatch((value ?? "").Trim(), "^\\d{6,}$");
+        }
+
+        private static string[] LoadFolderVersions(string rootDir)
+        {
+            List<string> result = new List<string>();
+            try
+            {
+                string path = LoadFoldersPath(rootDir);
+                if (!path.NullOrEmpty())
+                {
+                    XmlDocument document = new XmlDocument();
+                    document.XmlResolver = null;
+                    document.Load(path);
+                    foreach (XmlNode node in document.SelectNodes("//*[not(*)]"))
+                    {
+                        foreach (Match match in Regex.Matches(node.InnerText ?? "", @"(?<!\d)(\d+\.\d+)(?!\d)"))
+                        {
+                            AddVersion(result, match.Groups[1].Value);
+                        }
+                    }
+                }
+                if (!rootDir.NullOrEmpty() && Directory.Exists(rootDir))
+                {
+                    foreach (string dir in Directory.GetDirectories(rootDir))
+                    {
+                        AddVersion(result, Path.GetFileName(dir));
+                    }
+                }
+            }
+            catch
+            {
+            }
+            return result.ToArray();
+        }
+
+        private static void AddVersion(List<string> versions, string value)
+        {
+            string version = (value ?? "").Trim();
+            if (Regex.IsMatch(version, "^\\d+\\.\\d+$") && !versions.Contains(version))
+            {
+                versions.Add(version);
             }
         }
 

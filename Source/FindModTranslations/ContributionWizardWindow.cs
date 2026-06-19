@@ -25,7 +25,7 @@ namespace FindModTranslations
         {
             languageDisplayName = database == null ? LanguageTarget.CurrentFolder() : database.LanguageDisplayName;
             languageFolders = database == null ? LanguageTarget.CandidateFolders(LanguageTarget.CurrentFolder()) : database.EffectiveLanguageFolders();
-            drafts = BuildDrafts(ActiveModIndex.CreateActiveOnlyFast());
+            drafts = BuildDrafts(ActiveModIndex.Create(languageFolders));
             if (drafts.Count == 0)
             {
                 drafts.Add(ManualDraft());
@@ -44,7 +44,7 @@ namespace FindModTranslations
             Widgets.Label(new Rect(inRect.x, inRect.y + 38f, inRect.width, 50f), "FMT_Contribution_Intro".Translate(languageDisplayName));
             Widgets.Label(new Rect(inRect.x, inRect.y + 90f, inRect.width, 24f), "FMT_Contribution_Detected".Translate(drafts.Count, UsableDrafts().Count));
 
-            Rect listOuter = new Rect(inRect.x, inRect.y + 118f, inRect.width, inRect.height - 222f);
+            Rect listOuter = new Rect(inRect.x, inRect.y + 118f, inRect.width, inRect.height - 206f);
             float viewHeight = Math.Max(listOuter.height - 20f, drafts.Count * RowHeight + 8f);
             Rect view = new Rect(0f, 0f, listOuter.width - 18f, viewHeight);
             Widgets.BeginScrollView(listOuter, ref scroll, view);
@@ -59,7 +59,7 @@ namespace FindModTranslations
 
             Widgets.EndScrollView();
 
-            Rect helpRect = new Rect(inRect.x, inRect.yMax - 96f, inRect.width, 52f);
+            Rect helpRect = new Rect(inRect.x, inRect.yMax - 80f, inRect.width, 36f);
             Widgets.Label(helpRect, "FMT_Contribution_SubmitHelp".Translate());
 
             Rect buttons = new Rect(inRect.x, inRect.yMax - 38f, inRect.width, 34f);
@@ -74,10 +74,6 @@ namespace FindModTranslations
             if (Widgets.ButtonText(new Rect(buttons.x + 286f, buttons.y, 146f, 34f), "FMT_Contribution_OpenGithub".Translate()))
             {
                 OpenGithub();
-            }
-            if (Widgets.ButtonText(new Rect(buttons.x + 440f, buttons.y, 292f, 34f), "FMT_Contribution_CopySteamPost".Translate()))
-            {
-                CopySteamPost();
             }
             if (Widgets.ButtonText(new Rect(buttons.xMax - 118f, buttons.y, 118f, 34f), "FMT_Window_Close".Translate()))
             {
@@ -218,19 +214,6 @@ namespace FindModTranslations
             }
             Application.OpenURL(DatabaseGithubUrl);
             Messages.Message((json.NullOrEmpty() ? "FMT_Contribution_GithubOpened" : "FMT_Contribution_GithubOpenedCopied").Translate(), MessageTypeDefOf.TaskCompletion, false);
-        }
-
-        private void CopySteamPost()
-        {
-            string json = BuildJsonSnippet();
-            if (json.NullOrEmpty())
-            {
-                Messages.Message("FMT_Contribution_NoJson".Translate(), MessageTypeDefOf.RejectInput, false);
-                return;
-            }
-
-            GUIUtility.systemCopyBuffer = "FMT_Contribution_SteamPostHeader".Translate(languageDisplayName) + "\n\n" + json;
-            Messages.Message("FMT_Contribution_SteamPostCopied".Translate(), MessageTypeDefOf.TaskCompletion, false);
         }
 
         private string BuildJsonSnippet()
