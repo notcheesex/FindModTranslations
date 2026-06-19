@@ -25,7 +25,7 @@ namespace FindModTranslations
         {
             languageDisplayName = database == null ? LanguageTarget.CurrentFolder() : database.LanguageDisplayName;
             languageFolders = database == null ? LanguageTarget.CandidateFolders(LanguageTarget.CurrentFolder()) : database.EffectiveLanguageFolders();
-            drafts = BuildDrafts(ActiveModIndex.Create(languageFolders));
+            drafts = BuildDrafts(ActiveModIndex.CreateActiveOnlyFast());
             if (drafts.Count == 0)
             {
                 drafts.Add(ManualDraft());

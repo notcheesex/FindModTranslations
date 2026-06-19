@@ -51,9 +51,20 @@ namespace FindModTranslations
             ActiveModIndex index = new ActiveModIndex();
             foreach (ModContentPack mod in LoadedModManager.RunningModsListForReading)
             {
-                index.mods.Add(ActiveMod(mod, targetLanguageFolders));
+                index.mods.Add(ActiveMod(mod, targetLanguageFolders, true));
             }
             index.installedMods = InstalledMods();
+            index.BuildLookups();
+            return index;
+        }
+
+        public static ActiveModIndex CreateActiveOnlyFast()
+        {
+            ActiveModIndex index = new ActiveModIndex();
+            foreach (ModContentPack mod in LoadedModManager.RunningModsListForReading)
+            {
+                index.mods.Add(ActiveMod(mod, null, false));
+            }
             index.BuildLookups();
             return index;
         }
@@ -486,9 +497,9 @@ namespace FindModTranslations
             return null;
         }
 
-        private static ActiveModInfo ActiveMod(ModContentPack mod, string[] targetLanguageFolders)
+        private static ActiveModInfo ActiveMod(ModContentPack mod, string[] targetLanguageFolders, bool countTargetLanguage)
         {
-            int targetLanguageEntries = CountBuiltInTargetLanguageEntries(mod, targetLanguageFolders);
+            int targetLanguageEntries = countTargetLanguage ? CountBuiltInTargetLanguageEntries(mod, targetLanguageFolders) : 0;
             string root = mod == null ? "" : mod.RootDir;
             return new ActiveModInfo
             {
@@ -496,7 +507,7 @@ namespace FindModTranslations
                 packageId = SafeLower(mod.PackageId),
                 steamId = PublishedId(mod),
                 rootDir = root,
-                gameVersions = SupportedVersionsFromAbout(root),
+                gameVersions = countTargetLanguage ? SupportedVersionsFromAbout(root) : new string[0],
                 builtInTargetLanguageEntries = targetLanguageEntries,
                 hasBuiltInTargetLanguage = targetLanguageEntries > 0
             };
