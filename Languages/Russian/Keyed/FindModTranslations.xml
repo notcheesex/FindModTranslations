@@ -43,9 +43,9 @@
 	<FMT_Window_ActiveBadge>активен</FMT_Window_ActiveBadge>
 	<FMT_Contribution_OpenButton>Добавить переводы</FMT_Contribution_OpenButton>
 	<FMT_Contribution_Title>Добавить переводы в базу</FMT_Contribution_Title>
-	<FMT_Contribution_Intro>Добавьте переводы для {0}. Окно сначала открывается, затем сканирует только файлы активных модов в фоне; его можно закрыть во время сканирования.</FMT_Contribution_Intro>
-	<FMT_Contribution_ScanningActive>Идет фоновое сканирование метаданных активных модов. Окно можно безопасно закрыть.</FMT_Contribution_ScanningActive>
-	<FMT_Contribution_ScanComplete>Сканирование метаданных завершено. Найденные строки заполнены автоматически, где это возможно.</FMT_Contribution_ScanComplete>
+	<FMT_Contribution_Intro>Добавьте недостающие ссылки на переводы для {0}. Проверьте найденные строки или добавьте строку вручную.</FMT_Contribution_Intro>
+	<FMT_Contribution_ScanningActive>Сканирование метаданных активных модов...</FMT_Contribution_ScanningActive>
+	<FMT_Contribution_ScanComplete>Сканирование метаданных завершено. Проверьте найденные строки перед копированием.</FMT_Contribution_ScanComplete>
 	<FMT_Contribution_ScanFailed>Сканирование метаданных не удалось: {0}. Ручные строки остаются доступными.</FMT_Contribution_ScanFailed>
 	<FMT_Contribution_ScanWaiting>Сканирование метаданных ожидает запуска. Ручные строки остаются доступными.</FMT_Contribution_ScanWaiting>
 	<FMT_Contribution_Detected>Найдено строк: {0}; готово к копированию: {1}</FMT_Contribution_Detected>

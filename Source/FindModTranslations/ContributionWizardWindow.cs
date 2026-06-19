@@ -15,7 +15,7 @@ namespace FindModTranslations
     public class ContributionWizardWindow : Window
     {
         private const string DatabaseGithubUrl = "https://github.com/notcheesex/FindModTranslations-Database";
-        private const float RowHeight = 264f;
+        private const float RowHeight = 292f;
 
         private readonly List<ContributionDraft> drafts;
         private readonly ExistingSourceIndex existingSources;
@@ -534,27 +534,27 @@ namespace FindModTranslations
                 GUI.color = saved;
             }
 
-            Widgets.Label(new Rect(left, top + 58f, contentWidth, 22f), "FMT_Contribution_Source".Translate());
-            float fieldY = top + 80f;
+            Widgets.Label(new Rect(left, top + 58f, contentWidth, 24f), "FMT_Contribution_Source".Translate());
+            float fieldY = top + 84f;
             float nameWidth = 286f;
             float packageWidth = 286f;
             float steamWidth = 142f;
             float versionsWidth = Math.Max(118f, contentWidth - nameWidth - packageWidth - steamWidth - 24f);
-            draft.sourceName = DrawField(new Rect(left, fieldY, nameWidth, 44f), "FMT_Contribution_SourceName".Translate(), draft.sourceName);
-            draft.sourcePackageId = DrawField(new Rect(left + nameWidth + 8f, fieldY, packageWidth, 44f), "FMT_Contribution_SourcePackageId".Translate(), draft.sourcePackageId);
-            draft.sourceSteamId = DrawField(new Rect(left + nameWidth + packageWidth + 16f, fieldY, steamWidth, 44f), "FMT_Contribution_SourceSteamId".Translate(), draft.sourceSteamId);
-            draft.sourceGameVersions = DrawField(new Rect(left + nameWidth + packageWidth + steamWidth + 24f, fieldY, versionsWidth, 44f), "FMT_Contribution_SourceGameVersions".Translate(), draft.sourceGameVersions);
+            draft.sourceName = DrawField(new Rect(left, fieldY, nameWidth, 52f), "FMT_Contribution_SourceName".Translate(), draft.sourceName);
+            draft.sourcePackageId = DrawField(new Rect(left + nameWidth + 8f, fieldY, packageWidth, 52f), "FMT_Contribution_SourcePackageId".Translate(), draft.sourcePackageId);
+            draft.sourceSteamId = DrawField(new Rect(left + nameWidth + packageWidth + 16f, fieldY, steamWidth, 52f), "FMT_Contribution_SourceSteamId".Translate(), draft.sourceSteamId);
+            draft.sourceGameVersions = DrawField(new Rect(left + nameWidth + packageWidth + steamWidth + 24f, fieldY, versionsWidth, 52f), "FMT_Contribution_SourceGameVersions".Translate(), draft.sourceGameVersions);
 
-            Widgets.Label(new Rect(left, top + 128f, contentWidth, 22f), "FMT_Contribution_Translation".Translate());
-            fieldY = top + 150f;
+            Widgets.Label(new Rect(left, top + 144f, contentWidth, 24f), "FMT_Contribution_Translation".Translate());
+            fieldY = top + 170f;
             float translationNameWidth = 354f;
             float translationPackageWidth = Math.Max(240f, contentWidth - translationNameWidth - 8f);
             float linkWidth = Math.Max(260f, contentWidth - steamWidth - 8f);
-            draft.translationName = DrawField(new Rect(left, fieldY, translationNameWidth, 44f), "FMT_Contribution_TranslationName".Translate(), draft.translationName);
-            draft.translationPackageId = DrawField(new Rect(left + translationNameWidth + 8f, fieldY, translationPackageWidth, 44f), "FMT_Contribution_TranslationPackageId".Translate(), draft.translationPackageId);
-            fieldY += 48f;
-            draft.translationSteamId = DrawField(new Rect(left, fieldY, steamWidth, 44f), "FMT_Contribution_TranslationSteamId".Translate(), draft.translationSteamId);
-            draft.translationUrl = DrawField(new Rect(left + steamWidth + 8f, fieldY, linkWidth, 44f), "FMT_Contribution_TranslationUrl".Translate(), draft.translationUrl);
+            draft.translationName = DrawField(new Rect(left, fieldY, translationNameWidth, 52f), "FMT_Contribution_TranslationName".Translate(), draft.translationName);
+            draft.translationPackageId = DrawField(new Rect(left + translationNameWidth + 8f, fieldY, translationPackageWidth, 52f), "FMT_Contribution_TranslationPackageId".Translate(), draft.translationPackageId);
+            fieldY += 58f;
+            draft.translationSteamId = DrawField(new Rect(left, fieldY, steamWidth, 52f), "FMT_Contribution_TranslationSteamId".Translate(), draft.translationSteamId);
+            draft.translationUrl = DrawField(new Rect(left + steamWidth + 8f, fieldY, linkWidth, 52f), "FMT_Contribution_TranslationUrl".Translate(), draft.translationUrl);
 
             y += RowHeight;
         }
@@ -562,9 +562,9 @@ namespace FindModTranslations
         private static string DrawField(Rect rect, string label, string value)
         {
             GUI.color = new Color(0.62f, 0.68f, 0.76f, 1f);
-            Widgets.Label(new Rect(rect.x, rect.y, rect.width, 18f), label);
+            Widgets.Label(new Rect(rect.x, rect.y, rect.width, 22f), label);
             GUI.color = Color.white;
-            string result = Widgets.TextField(new Rect(rect.x, rect.y + 19f, rect.width, 24f), value ?? "");
+            string result = Widgets.TextField(new Rect(rect.x, rect.y + 26f, rect.width, 24f), value ?? "");
             GUI.color = Color.white;
             return result;
         }
