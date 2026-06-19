@@ -58,14 +58,17 @@
 	<FMT_Contribution_AddManual>Добавить строку</FMT_Contribution_AddManual>
 	<FMT_Contribution_CopyJson>Копировать JSON</FMT_Contribution_CopyJson>
 	<FMT_Contribution_OpenGithub>Открыть GitHub</FMT_Contribution_OpenGithub>
-	<FMT_Contribution_CopySteamPost>Копировать пост Steam</FMT_Contribution_CopySteamPost>
+	<FMT_Contribution_CopySteamPost>Копировать текст поста Steam</FMT_Contribution_CopySteamPost>
 	<FMT_Contribution_Included>Включено</FMT_Contribution_Included>
 	<FMT_Contribution_Skipped>Пропущено</FMT_Contribution_Skipped>
 	<FMT_Contribution_ReasonLanguageAndName>Найдено по {0} записям языка {1} и названию/packageId, похожим на перевод.</FMT_Contribution_ReasonLanguageAndName>
 	<FMT_Contribution_ReasonLanguageContent>Найдено по {0} записям языка {1}. Проверьте перед включением.</FMT_Contribution_ReasonLanguageContent>
 	<FMT_Contribution_ReasonName>Найдено по названию/packageId, похожим на перевод.</FMT_Contribution_ReasonName>
 	<FMT_Contribution_ReasonManual>Ручная строка для добавления.</FMT_Contribution_ReasonManual>
-	<FMT_Contribution_SubmitHelp>Скопируйте JSON для PR, issue или discussion в базе GitHub. URL обсуждения Steam не встроен; скопируйте текст поста Steam и вставьте вручную.</FMT_Contribution_SubmitHelp>
+	<FMT_Contribution_MissingSourceIdentity>Нужно название, packageId или Steam ID оригинала, иначе строку нельзя скопировать.</FMT_Contribution_MissingSourceIdentity>
+	<FMT_Contribution_MissingTranslationLink>Нужен Steam ID перевода или безопасный URL Steam Workshop, иначе строку нельзя скопировать.</FMT_Contribution_MissingTranslationLink>
+	<FMT_Contribution_TranslationLinkHint>Рекомендуется указать Steam ID перевода или безопасный URL Steam Workshop для проверки базы.</FMT_Contribution_TranslationLinkHint>
+	<FMT_Contribution_SubmitHelp>Скопируйте JSON для PR, issue или discussion в базе GitHub. Кнопка Steam копирует текст поста в буфер обмена, а не открывает обсуждение Steam.</FMT_Contribution_SubmitHelp>
 	<FMT_Contribution_NoJson>Во включенных строках недостаточно данных об оригинале и переводе.</FMT_Contribution_NoJson>
 	<FMT_Contribution_JsonCopied>JSON для базы скопирован в буфер обмена.</FMT_Contribution_JsonCopied>
 	<FMT_Contribution_GithubOpened>Страница базы на GitHub открыта.</FMT_Contribution_GithubOpened>
