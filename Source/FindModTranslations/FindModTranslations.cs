@@ -61,6 +61,10 @@ namespace FindModTranslations
                 RemoteDatabase.ForceRefresh(LanguageTarget.CurrentFolder());
                 ShowWindow(autoOpened: false);
             }
+            if (listing.ButtonText("FMT_Contribution_OpenButton".Translate()))
+            {
+                ShowContributionWizard();
+            }
             listing.Gap(8f);
             listing.Label(DatabaseStatusText());
             listing.End();
@@ -139,6 +143,11 @@ namespace FindModTranslations
                 return;
             }
             Find.WindowStack.Add(new TranslationFinderWindow(matches, db));
+        }
+
+        public static void ShowContributionWizard()
+        {
+            Find.WindowStack.Add(new ContributionWizardWindow(DatabaseForCurrentLanguage()));
         }
 
         private static List<TranslationMatch> CachedMatches(TranslationDatabase db, ActiveModIndex active, bool ignoreActiveAlternatives)

@@ -101,6 +101,10 @@ namespace FindModTranslations
                     Find.WindowStack.Add(new ConfirmOpenLinksDialog(urls));
                 }
             }
+            if (Widgets.ButtonText(new Rect(buttons.x + 380f, buttons.y, 220f, 34f), "FMT_Contribution_OpenButton".Translate()))
+            {
+                FindModTranslationsMod.ShowContributionWizard();
+            }
             if (Widgets.ButtonText(new Rect(buttons.xMax - 120f, buttons.y, 120f, 34f), "FMT_Window_Close".Translate()))
             {
                 Close();

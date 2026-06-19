@@ -41,4 +41,35 @@
 	<FMT_Window_StatusInstalledAlternative>Установлена альтернатива</FMT_Window_StatusInstalledAlternative>
 	<FMT_Window_InstalledBadge>установлен</FMT_Window_InstalledBadge>
 	<FMT_Window_ActiveBadge>активен</FMT_Window_ActiveBadge>
+	<FMT_Contribution_OpenButton>Добавить переводы</FMT_Contribution_OpenButton>
+	<FMT_Contribution_Title>Добавить переводы в базу</FMT_Contribution_Title>
+	<FMT_Contribution_Intro>Найдены возможные моды-переводы для {0}. Проверьте и исправьте поля оригинального мода и перевода перед копированием JSON для базы.</FMT_Contribution_Intro>
+	<FMT_Contribution_Detected>Найдено строк: {0}; готово к копированию: {1}</FMT_Contribution_Detected>
+	<FMT_Contribution_Source>Оригинальный мод</FMT_Contribution_Source>
+	<FMT_Contribution_Translation>Мод-перевод</FMT_Contribution_Translation>
+	<FMT_Contribution_SourceName>Название оригинала</FMT_Contribution_SourceName>
+	<FMT_Contribution_SourcePackageId>packageId оригинала</FMT_Contribution_SourcePackageId>
+	<FMT_Contribution_SourceSteamId>Steam ID оригинала</FMT_Contribution_SourceSteamId>
+	<FMT_Contribution_SourceGameVersions>Версии игры</FMT_Contribution_SourceGameVersions>
+	<FMT_Contribution_TranslationName>Название перевода</FMT_Contribution_TranslationName>
+	<FMT_Contribution_TranslationPackageId>packageId перевода</FMT_Contribution_TranslationPackageId>
+	<FMT_Contribution_TranslationSteamId>Steam ID перевода</FMT_Contribution_TranslationSteamId>
+	<FMT_Contribution_TranslationUrl>URL перевода</FMT_Contribution_TranslationUrl>
+	<FMT_Contribution_AddManual>Добавить строку</FMT_Contribution_AddManual>
+	<FMT_Contribution_CopyJson>Копировать JSON</FMT_Contribution_CopyJson>
+	<FMT_Contribution_OpenGithub>Открыть GitHub</FMT_Contribution_OpenGithub>
+	<FMT_Contribution_CopySteamPost>Копировать пост Steam</FMT_Contribution_CopySteamPost>
+	<FMT_Contribution_Included>Включено</FMT_Contribution_Included>
+	<FMT_Contribution_Skipped>Пропущено</FMT_Contribution_Skipped>
+	<FMT_Contribution_ReasonLanguageAndName>Найдено по {0} записям языка {1} и названию/packageId, похожим на перевод.</FMT_Contribution_ReasonLanguageAndName>
+	<FMT_Contribution_ReasonLanguageContent>Найдено по {0} записям языка {1}. Проверьте перед включением.</FMT_Contribution_ReasonLanguageContent>
+	<FMT_Contribution_ReasonName>Найдено по названию/packageId, похожим на перевод.</FMT_Contribution_ReasonName>
+	<FMT_Contribution_ReasonManual>Ручная строка для добавления.</FMT_Contribution_ReasonManual>
+	<FMT_Contribution_SubmitHelp>Скопируйте JSON для PR, issue или discussion в базе GitHub. URL обсуждения Steam не встроен; скопируйте текст поста Steam и вставьте вручную.</FMT_Contribution_SubmitHelp>
+	<FMT_Contribution_NoJson>Во включенных строках недостаточно данных об оригинале и переводе.</FMT_Contribution_NoJson>
+	<FMT_Contribution_JsonCopied>JSON для базы скопирован в буфер обмена.</FMT_Contribution_JsonCopied>
+	<FMT_Contribution_GithubOpened>Страница базы на GitHub открыта.</FMT_Contribution_GithubOpened>
+	<FMT_Contribution_GithubOpenedCopied>JSON для базы скопирован; страница базы на GitHub открыта.</FMT_Contribution_GithubOpenedCopied>
+	<FMT_Contribution_SteamPostHeader>Предложение для Find Mod Translations, язык {0}. Пожалуйста, добавьте эти записи переводов в базу:</FMT_Contribution_SteamPostHeader>
+	<FMT_Contribution_SteamPostCopied>Текст поста для обсуждения Steam скопирован в буфер обмена. Вставьте его в обсуждение мода.</FMT_Contribution_SteamPostCopied>
 </LanguageData>

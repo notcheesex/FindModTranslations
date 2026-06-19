@@ -17,6 +17,8 @@ namespace FindModTranslations
         public string name;
         public string packageId;
         public string steamId;
+        public string rootDir;
+        public string[] gameVersions = new string[0];
         public bool hasBuiltInTargetLanguage;
         public int builtInTargetLanguageEntries;
         public object meta;
@@ -54,6 +56,15 @@ namespace FindModTranslations
             index.installedMods = InstalledMods();
             index.BuildLookups();
             return index;
+        }
+
+        public static int CountTargetLanguageEntries(ActiveModInfo mod, string[] targetLanguageFolders)
+        {
+            if (mod == null || mod.rootDir.NullOrEmpty())
+            {
+                return 0;
+            }
+            return CountBuiltInTargetLanguageEntries(mod.rootDir, targetLanguageFolders);
         }
 
         public bool ContainsActiveTranslation(TranslationModInfo translation)
@@ -295,13 +306,60 @@ namespace FindModTranslations
             {
                 name = name.NullOrEmpty() ? Path.GetFileName(rootDir) : name,
                 packageId = SafeLower(packageId),
-                steamId = PublishedFileId(rootDir)
+                steamId = PublishedFileId(rootDir),
+                rootDir = rootDir,
+                gameVersions = SupportedVersions(document)
             };
             lock (CacheGate)
             {
                 localModCache[cacheKey] = new LocalModCacheEntry(stamp, info);
             }
             return info;
+        }
+
+        private static string[] SupportedVersions(XmlDocument document)
+        {
+            XmlNode versions = document.SelectSingleNode("/ModMetaData/supportedVersions");
+            if (versions == null)
+            {
+                return new string[0];
+            }
+
+            List<string> result = new List<string>();
+            foreach (XmlNode node in versions.ChildNodes)
+            {
+                if (node.NodeType != XmlNodeType.Element)
+                {
+                    continue;
+                }
+                string value = (node.InnerText ?? "").Trim();
+                if (!value.NullOrEmpty())
+                {
+                    result.Add(value);
+                }
+            }
+            return result.ToArray();
+        }
+
+        private static string[] SupportedVersionsFromAbout(string rootDir)
+        {
+            try
+            {
+                string about = Path.Combine(rootDir, "About", "About.xml");
+                if (rootDir.NullOrEmpty() || !File.Exists(about))
+                {
+                    return new string[0];
+                }
+
+                XmlDocument document = new XmlDocument();
+                document.XmlResolver = null;
+                document.Load(about);
+                return SupportedVersions(document);
+            }
+            catch
+            {
+                return new string[0];
+            }
         }
 
         private static string XmlText(XmlDocument document, string tag)
@@ -338,40 +396,107 @@ namespace FindModTranslations
         {
             return new ActiveModInfo
             {
-                name = StringMember(meta, "Name") ?? StringMember(meta, "name") ?? "<unnamed>",
-                packageId = SafeLower(StringMember(meta, "PackageId") ?? StringMember(meta, "packageId") ?? StringMember(meta, "PackageIdNonUnique") ?? ""),
-                steamId = StringMember(meta, "PublishedFileId") ?? "",
+                name = FirstStringMember(meta, "Name", "name") ?? "<unnamed>",
+                packageId = SafeLower(FirstStringMember(meta, "PackageId", "packageId", "PackageIdNonUnique") ?? ""),
+                steamId = FirstStringMember(meta, "PublishedFileId", "publishedFileId") ?? "",
+                rootDir = FirstStringMember(meta, "RootDir", "rootDir", "Folder", "folder") ?? "",
+                gameVersions = StringArrayMember(meta, "SupportedVersions", "supportedVersions", "SupportedVersionsReadOnly", "supportedVersionsReadOnly"),
                 meta = meta
             };
         }
 
+        private static string FirstStringMember(object obj, params string[] names)
+        {
+            foreach (string name in names)
+            {
+                string value = StringMember(obj, name);
+                if (!value.NullOrEmpty())
+                {
+                    return value;
+                }
+            }
+            return "";
+        }
+
         private static string StringMember(object obj, string name)
         {
-            if (obj == null) return "";
+            object value = MemberValue(obj, name);
+            return value == null ? "" : value.ToString();
+        }
+
+        private static string[] StringArrayMember(object obj, params string[] names)
+        {
+            foreach (string name in names)
+            {
+                object value = MemberValue(obj, name);
+                if (value == null)
+                {
+                    continue;
+                }
+
+                string[] strings = value as string[];
+                if (strings != null)
+                {
+                    return strings.Where(v => !v.NullOrEmpty()).ToArray();
+                }
+
+                string text = value as string;
+                if (!text.NullOrEmpty())
+                {
+                    return new[] { text };
+                }
+
+                System.Collections.IEnumerable enumerable = value as System.Collections.IEnumerable;
+                if (enumerable == null)
+                {
+                    continue;
+                }
+
+                List<string> result = new List<string>();
+                foreach (object item in enumerable)
+                {
+                    string itemText = item == null ? "" : item.ToString();
+                    if (!itemText.NullOrEmpty())
+                    {
+                        result.Add(itemText);
+                    }
+                }
+                if (result.Count > 0)
+                {
+                    return result.ToArray();
+                }
+            }
+            return new string[0];
+        }
+
+        private static object MemberValue(object obj, string name)
+        {
+            if (obj == null) return null;
             Type type = obj.GetType();
             PropertyInfo prop = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (prop != null)
             {
-                object value = prop.GetValue(obj, null);
-                return value == null ? "" : value.ToString();
+                return prop.GetValue(obj, null);
             }
             FieldInfo field = type.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (field != null)
             {
-                object value = field.GetValue(obj);
-                return value == null ? "" : value.ToString();
+                return field.GetValue(obj);
             }
-            return "";
+            return null;
         }
 
         private static ActiveModInfo ActiveMod(ModContentPack mod, string[] targetLanguageFolders)
         {
             int targetLanguageEntries = CountBuiltInTargetLanguageEntries(mod, targetLanguageFolders);
+            string root = mod == null ? "" : mod.RootDir;
             return new ActiveModInfo
             {
                 name = mod.Name ?? "<unnamed>",
                 packageId = SafeLower(mod.PackageId),
                 steamId = PublishedId(mod),
+                rootDir = root,
+                gameVersions = SupportedVersionsFromAbout(root),
                 builtInTargetLanguageEntries = targetLanguageEntries,
                 hasBuiltInTargetLanguage = targetLanguageEntries > 0
             };
@@ -380,9 +505,13 @@ namespace FindModTranslations
         private static int CountBuiltInTargetLanguageEntries(ModContentPack mod, string[] targetLanguageFolders)
         {
             if (mod == null) return 0;
+            return CountBuiltInTargetLanguageEntries(mod.RootDir, targetLanguageFolders);
+        }
+
+        private static int CountBuiltInTargetLanguageEntries(string root, string[] targetLanguageFolders)
+        {
             try
             {
-                string root = mod.RootDir;
                 if (root.NullOrEmpty() || !Directory.Exists(root)) return 0;
                 List<string> languageFiles;
                 string stamp = BuiltInLanguageStamp(root, targetLanguageFolders, out languageFiles);
