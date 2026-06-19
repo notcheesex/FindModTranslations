@@ -22,10 +22,12 @@ namespace FindModTranslations
         private readonly string[] languageFolders;
         private readonly object scanLock = new object();
         private Vector2 scroll;
-        private bool scanInProgress;
-        private bool scanComplete;
-        private bool scanCancelled;
-        private string scanError;
+        private volatile bool scanInProgress;
+        private volatile bool scanComplete;
+        private volatile bool scanCancelled;
+        private volatile bool activeScanStarted;
+        private volatile bool installedScanRequested;
+        private volatile string scanError;
         private ActiveModIndex pendingScanIndex;
 
         public override Vector2 InitialSize => new Vector2(940f, 720f);
@@ -38,7 +40,6 @@ namespace FindModTranslations
 
             doCloseX = true;
             absorbInputAroundWindow = true;
-            StartBackgroundScan(SnapshotActiveMods());
         }
 
         public override void DoWindowContents(Rect inRect)
@@ -84,9 +85,20 @@ namespace FindModTranslations
             {
                 OpenGithub();
             }
+            if (Widgets.ButtonText(new Rect(buttons.x + 440f, buttons.y, 186f, 34f), "FMT_Contribution_ScanInstalled".Translate()))
+            {
+                activeScanStarted = true;
+                StartBackgroundScan(SnapshotActiveMods(), includeInstalledRoots: true);
+            }
             if (Widgets.ButtonText(new Rect(buttons.xMax - 118f, buttons.y, 118f, 34f), "FMT_Window_Close".Translate()))
             {
                 Close();
+            }
+
+            if (!activeScanStarted && !scanInProgress)
+            {
+                activeScanStarted = true;
+                StartBackgroundScan(SnapshotActiveMods(), includeInstalledRoots: false);
             }
         }
 
@@ -102,7 +114,7 @@ namespace FindModTranslations
             if (scanInProgress)
             {
                 GUI.color = new Color(0.72f, 0.78f, 0.86f, 1f);
-                Widgets.Label(rect, "FMT_Contribution_Scanning".Translate());
+                Widgets.Label(rect, (installedScanRequested ? "FMT_Contribution_ScanningInstalled" : "FMT_Contribution_ScanningActive").Translate());
             }
             else if (!scanError.NullOrEmpty())
             {
@@ -156,14 +168,21 @@ namespace FindModTranslations
             return result;
         }
 
-        private void StartBackgroundScan(List<ActiveModInfo> activeSnapshot)
+        private void StartBackgroundScan(List<ActiveModInfo> activeSnapshot, bool includeInstalledRoots)
         {
+            if (scanInProgress)
+            {
+                return;
+            }
+            scanError = null;
             scanInProgress = true;
+            scanComplete = false;
+            installedScanRequested = includeInstalledRoots;
             ThreadPool.QueueUserWorkItem(delegate
             {
                 try
                 {
-                    ActiveModIndex index = BuildFilesystemIndex(activeSnapshot, languageFolders, IsScanCancelled);
+                    ActiveModIndex index = BuildFilesystemIndex(activeSnapshot, languageFolders, includeInstalledRoots, IsScanCancelled);
                     if (IsScanCancelled())
                     {
                         return;
@@ -193,7 +212,7 @@ namespace FindModTranslations
             return scanCancelled;
         }
 
-        private static ActiveModIndex BuildFilesystemIndex(List<ActiveModInfo> activeSnapshot, string[] targetLanguageFolders, Func<bool> cancelled)
+        private static ActiveModIndex BuildFilesystemIndex(List<ActiveModInfo> activeSnapshot, string[] targetLanguageFolders, bool includeInstalledRoots, Func<bool> cancelled)
         {
             ActiveModIndex index = new ActiveModIndex();
             Dictionary<string, ActiveModInfo> installedByIdentity = new Dictionary<string, ActiveModInfo>();
@@ -215,17 +234,33 @@ namespace FindModTranslations
                 }
                 index.mods.Add(info);
                 AddInstalledCandidate(installedByIdentity, info);
+                SleepIfContinuing(cancelled);
             }
 
-            foreach (string root in InstalledRootsFromSnapshot(activeSnapshot))
+            if (!includeInstalledRoots)
+            {
+                index.installedMods = installedByIdentity.Values.ToList();
+                return index;
+            }
+
+            foreach (string root in InstalledRootsFromSnapshot(activeSnapshot, cancelled))
             {
                 if (cancelled()) return index;
                 ActiveModInfo info = FilesystemModInfo(root, targetLanguageFolders);
                 AddInstalledCandidate(installedByIdentity, info);
+                SleepIfContinuing(cancelled);
             }
 
             index.installedMods = installedByIdentity.Values.ToList();
             return index;
+        }
+
+        private static void SleepIfContinuing(Func<bool> cancelled)
+        {
+            if (cancelled == null || !cancelled())
+            {
+                Thread.Sleep(1);
+            }
         }
 
         private static ActiveModInfo ClonePlain(ActiveModInfo source)
@@ -242,11 +277,12 @@ namespace FindModTranslations
             };
         }
 
-        private static IEnumerable<string> InstalledRootsFromSnapshot(List<ActiveModInfo> activeSnapshot)
+        private static IEnumerable<string> InstalledRootsFromSnapshot(List<ActiveModInfo> activeSnapshot, Func<bool> cancelled)
         {
             HashSet<string> parents = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (ActiveModInfo mod in activeSnapshot ?? new List<ActiveModInfo>())
             {
+                if (cancelled()) yield break;
                 string root = mod == null ? "" : mod.rootDir;
                 if (String.IsNullOrEmpty(root))
                 {
@@ -270,6 +306,7 @@ namespace FindModTranslations
 
             foreach (string parent in parents)
             {
+                if (cancelled()) yield break;
                 if (String.IsNullOrEmpty(parent) || !Directory.Exists(parent))
                 {
                     continue;
@@ -285,6 +322,7 @@ namespace FindModTranslations
                 }
                 foreach (string dir in dirs)
                 {
+                    if (cancelled()) yield break;
                     if (File.Exists(Path.Combine(dir, "About", "About.xml")))
                     {
                         yield return dir;
