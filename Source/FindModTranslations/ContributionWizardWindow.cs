@@ -1,9 +1,12 @@
 using RimWorld;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Xml;
 using UnityEngine;
 using Verse;
 
@@ -17,7 +20,13 @@ namespace FindModTranslations
         private readonly List<ContributionDraft> drafts;
         private readonly string languageDisplayName;
         private readonly string[] languageFolders;
+        private readonly object scanLock = new object();
         private Vector2 scroll;
+        private bool scanInProgress;
+        private bool scanComplete;
+        private bool scanCancelled;
+        private string scanError;
+        private ActiveModIndex pendingScanIndex;
 
         public override Vector2 InitialSize => new Vector2(940f, 720f);
 
@@ -26,22 +35,25 @@ namespace FindModTranslations
             languageDisplayName = database == null ? LanguageTarget.CurrentFolder() : database.LanguageDisplayName;
             languageFolders = database == null ? LanguageTarget.CandidateFolders(LanguageTarget.CurrentFolder()) : database.EffectiveLanguageFolders();
             drafts = new List<ContributionDraft> { ManualDraft() };
-            drafts.AddRange(BuildDrafts(ActiveModIndex.CreateActiveOnlyFast()));
 
             doCloseX = true;
             absorbInputAroundWindow = true;
+            StartBackgroundScan(SnapshotActiveMods());
         }
 
         public override void DoWindowContents(Rect inRect)
         {
+            ApplyPendingScanResult();
+
             Text.Font = GameFont.Medium;
             Widgets.Label(new Rect(inRect.x, inRect.y, inRect.width, 34f), "FMT_Contribution_Title".Translate());
             Text.Font = GameFont.Small;
 
             Widgets.Label(new Rect(inRect.x, inRect.y + 38f, inRect.width, 50f), "FMT_Contribution_Intro".Translate(languageDisplayName));
-            Widgets.Label(new Rect(inRect.x, inRect.y + 90f, inRect.width, 24f), "FMT_Contribution_Detected".Translate(drafts.Count, UsableDrafts().Count));
+            DrawScanStatus(new Rect(inRect.x, inRect.y + 90f, inRect.width, 22f));
+            Widgets.Label(new Rect(inRect.x, inRect.y + 116f, inRect.width, 24f), "FMT_Contribution_Detected".Translate(drafts.Count, UsableDrafts().Count));
 
-            Rect listOuter = new Rect(inRect.x, inRect.y + 118f, inRect.width, inRect.height - 206f);
+            Rect listOuter = new Rect(inRect.x, inRect.y + 144f, inRect.width, inRect.height - 232f);
             float viewHeight = Math.Max(listOuter.height - 20f, drafts.Count * RowHeight + 8f);
             Rect view = new Rect(0f, 0f, listOuter.width - 18f, viewHeight);
             Widgets.BeginScrollView(listOuter, ref scroll, view);
@@ -76,6 +88,449 @@ namespace FindModTranslations
             {
                 Close();
             }
+        }
+
+        public override void PreClose()
+        {
+            scanCancelled = true;
+            base.PreClose();
+        }
+
+        private void DrawScanStatus(Rect rect)
+        {
+            Color saved = GUI.color;
+            if (scanInProgress)
+            {
+                GUI.color = new Color(0.72f, 0.78f, 0.86f, 1f);
+                Widgets.Label(rect, "FMT_Contribution_Scanning".Translate());
+            }
+            else if (!scanError.NullOrEmpty())
+            {
+                GUI.color = new Color(1f, 0.62f, 0.38f, 1f);
+                Widgets.Label(rect, "FMT_Contribution_ScanFailed".Translate(scanError));
+            }
+            else if (scanComplete)
+            {
+                GUI.color = new Color(0.62f, 0.78f, 0.62f, 1f);
+                Widgets.Label(rect, "FMT_Contribution_ScanComplete".Translate());
+            }
+            else
+            {
+                Widgets.Label(rect, "FMT_Contribution_ScanWaiting".Translate());
+            }
+            GUI.color = saved;
+        }
+
+        private void ApplyPendingScanResult()
+        {
+            ActiveModIndex index = null;
+            lock (scanLock)
+            {
+                if (pendingScanIndex != null)
+                {
+                    index = pendingScanIndex;
+                    pendingScanIndex = null;
+                }
+            }
+            if (index == null)
+            {
+                return;
+            }
+
+            drafts.RemoveAll(d => !d.manual);
+            drafts.AddRange(BuildDrafts(index));
+        }
+
+        private List<ActiveModInfo> SnapshotActiveMods()
+        {
+            List<ActiveModInfo> result = new List<ActiveModInfo>();
+            foreach (ModContentPack mod in LoadedModManager.RunningModsListForReading)
+            {
+                result.Add(new ActiveModInfo
+                {
+                    name = mod.Name ?? "<unnamed>",
+                    packageId = ActiveModIndex.SafeLower(mod.PackageId),
+                    rootDir = mod.RootDir
+                });
+            }
+            return result;
+        }
+
+        private void StartBackgroundScan(List<ActiveModInfo> activeSnapshot)
+        {
+            scanInProgress = true;
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                try
+                {
+                    ActiveModIndex index = BuildFilesystemIndex(activeSnapshot, languageFolders, IsScanCancelled);
+                    if (IsScanCancelled())
+                    {
+                        return;
+                    }
+                    lock (scanLock)
+                    {
+                        pendingScanIndex = index;
+                    }
+                    scanComplete = true;
+                }
+                catch (Exception ex)
+                {
+                    if (!IsScanCancelled())
+                    {
+                        scanError = ex.Message;
+                    }
+                }
+                finally
+                {
+                    scanInProgress = false;
+                }
+            });
+        }
+
+        private bool IsScanCancelled()
+        {
+            return scanCancelled;
+        }
+
+        private static ActiveModIndex BuildFilesystemIndex(List<ActiveModInfo> activeSnapshot, string[] targetLanguageFolders, Func<bool> cancelled)
+        {
+            ActiveModIndex index = new ActiveModIndex();
+            Dictionary<string, ActiveModInfo> installedByIdentity = new Dictionary<string, ActiveModInfo>();
+            foreach (ActiveModInfo active in activeSnapshot ?? new List<ActiveModInfo>())
+            {
+                if (cancelled()) return index;
+                ActiveModInfo info = FilesystemModInfo(active.rootDir, targetLanguageFolders);
+                if (info == null)
+                {
+                    info = ClonePlain(active);
+                }
+                if (String.IsNullOrEmpty(info.name))
+                {
+                    info.name = active.name;
+                }
+                if (String.IsNullOrEmpty(info.packageId))
+                {
+                    info.packageId = active.packageId;
+                }
+                index.mods.Add(info);
+                AddInstalledCandidate(installedByIdentity, info);
+            }
+
+            foreach (string root in InstalledRootsFromSnapshot(activeSnapshot))
+            {
+                if (cancelled()) return index;
+                ActiveModInfo info = FilesystemModInfo(root, targetLanguageFolders);
+                AddInstalledCandidate(installedByIdentity, info);
+            }
+
+            index.installedMods = installedByIdentity.Values.ToList();
+            return index;
+        }
+
+        private static ActiveModInfo ClonePlain(ActiveModInfo source)
+        {
+            return new ActiveModInfo
+            {
+                name = source == null ? "" : source.name,
+                packageId = source == null ? "" : source.packageId,
+                steamId = source == null ? "" : source.steamId,
+                rootDir = source == null ? "" : source.rootDir,
+                gameVersions = source == null || source.gameVersions == null ? new string[0] : source.gameVersions.ToArray(),
+                builtInTargetLanguageEntries = source == null ? 0 : source.builtInTargetLanguageEntries,
+                hasBuiltInTargetLanguage = source != null && source.hasBuiltInTargetLanguage
+            };
+        }
+
+        private static IEnumerable<string> InstalledRootsFromSnapshot(List<ActiveModInfo> activeSnapshot)
+        {
+            HashSet<string> parents = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (ActiveModInfo mod in activeSnapshot ?? new List<ActiveModInfo>())
+            {
+                string root = mod == null ? "" : mod.rootDir;
+                if (String.IsNullOrEmpty(root))
+                {
+                    continue;
+                }
+
+                string normalized = root.Replace('\\', '/');
+                Match workshop = Regex.Match(normalized, @"^(.*?/workshop/content/294100)/\d{6,}(?:/|$)", RegexOptions.IgnoreCase);
+                if (workshop.Success)
+                {
+                    parents.Add(workshop.Groups[1].Value);
+                    continue;
+                }
+
+                DirectoryInfo parent = Directory.GetParent(root);
+                if (parent != null)
+                {
+                    parents.Add(parent.FullName);
+                }
+            }
+
+            foreach (string parent in parents)
+            {
+                if (String.IsNullOrEmpty(parent) || !Directory.Exists(parent))
+                {
+                    continue;
+                }
+                string[] dirs;
+                try
+                {
+                    dirs = Directory.GetDirectories(parent);
+                }
+                catch
+                {
+                    continue;
+                }
+                foreach (string dir in dirs)
+                {
+                    if (File.Exists(Path.Combine(dir, "About", "About.xml")))
+                    {
+                        yield return dir;
+                    }
+                }
+            }
+        }
+
+        private static void AddInstalledCandidate(Dictionary<string, ActiveModInfo> installedByIdentity, ActiveModInfo info)
+        {
+            if (installedByIdentity == null || info == null)
+            {
+                return;
+            }
+            string identity = CandidateIdentity(info);
+            if (!String.IsNullOrEmpty(identity) && !installedByIdentity.ContainsKey(identity))
+            {
+                installedByIdentity.Add(identity, info);
+            }
+        }
+
+        private static ActiveModInfo FilesystemModInfo(string rootDir, string[] targetLanguageFolders)
+        {
+            if (String.IsNullOrEmpty(rootDir))
+            {
+                return null;
+            }
+            rootDir = MetadataRoot(rootDir);
+            string about = Path.Combine(rootDir, "About", "About.xml");
+            if (!File.Exists(about))
+            {
+                return null;
+            }
+
+            XmlDocument document = new XmlDocument();
+            document.XmlResolver = null;
+            document.Load(about);
+            string packageId = ActiveModIndex.SafeLower(XmlText(document, "packageId"));
+            ActiveModInfo info = new ActiveModInfo
+            {
+                name = FirstNonEmpty(XmlText(document, "name"), Path.GetFileName(rootDir)),
+                packageId = packageId,
+                steamId = PublishedFileId(rootDir),
+                rootDir = rootDir,
+                gameVersions = SupportedVersions(document, rootDir),
+                builtInTargetLanguageEntries = CountTargetLanguageEntries(rootDir, targetLanguageFolders)
+            };
+            info.hasBuiltInTargetLanguage = info.builtInTargetLanguageEntries > 0;
+            return info;
+        }
+
+        private static string MetadataRoot(string rootDir)
+        {
+            string current = rootDir;
+            for (int i = 0; i < 3 && !String.IsNullOrEmpty(current); i++)
+            {
+                if (File.Exists(Path.Combine(current, "About", "About.xml")))
+                {
+                    return current;
+                }
+                DirectoryInfo parent = Directory.GetParent(current);
+                current = parent == null ? "" : parent.FullName;
+            }
+            return rootDir;
+        }
+
+        private static string XmlText(XmlDocument document, string tag)
+        {
+            XmlNode node = document == null ? null : document.SelectSingleNode("/ModMetaData/" + tag);
+            return node == null ? "" : (node.InnerText ?? "").Trim();
+        }
+
+        private static string FirstNonEmpty(string first, string second)
+        {
+            return String.IsNullOrEmpty(first) ? (second ?? "") : first;
+        }
+
+        private static string PublishedFileId(string rootDir)
+        {
+            string id = ReadId(Path.Combine(rootDir, "About", "PublishedFileId.txt"));
+            if (String.IsNullOrEmpty(id))
+            {
+                id = ReadId(Path.Combine(rootDir, "PublishedFileId.txt"));
+            }
+            if (String.IsNullOrEmpty(id))
+            {
+                Match match = Regex.Match(rootDir.Replace('\\', '/'), @"/workshop/content/294100/(\d{6,})(?:/|$)", RegexOptions.IgnoreCase);
+                id = match.Success ? match.Groups[1].Value : "";
+            }
+            return id;
+        }
+
+        private static string ReadId(string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    string id = File.ReadAllText(path).Trim();
+                    if (Regex.IsMatch(id, "^\\d{6,}$"))
+                    {
+                        return id;
+                    }
+                }
+            }
+            catch
+            {
+            }
+            return "";
+        }
+
+        private static string[] SupportedVersions(XmlDocument document, string rootDir)
+        {
+            List<string> result = new List<string>();
+            XmlNode versions = document == null ? null : document.SelectSingleNode("/ModMetaData/supportedVersions");
+            if (versions != null)
+            {
+                foreach (XmlNode node in versions.ChildNodes)
+                {
+                    if (node.NodeType == XmlNodeType.Element)
+                    {
+                        AddVersion(result, (node.InnerText ?? "").Trim());
+                    }
+                }
+            }
+            AddLoadFolderVersions(result, rootDir);
+            return result.ToArray();
+        }
+
+        private static void AddLoadFolderVersions(List<string> result, string rootDir)
+        {
+            try
+            {
+                string path = Path.Combine(rootDir, "LoadFolders.xml");
+                if (File.Exists(path))
+                {
+                    XmlDocument document = new XmlDocument();
+                    document.XmlResolver = null;
+                    document.Load(path);
+                    foreach (XmlNode node in document.SelectNodes("//*[not(*)]"))
+                    {
+                        foreach (Match match in Regex.Matches(node.InnerText ?? "", @"(?<!\d)(\d+\.\d+)(?!\d)"))
+                        {
+                            AddVersion(result, match.Groups[1].Value);
+                        }
+                    }
+                }
+                foreach (string dir in Directory.GetDirectories(rootDir))
+                {
+                    AddVersion(result, Path.GetFileName(dir));
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private static void AddVersion(List<string> versions, string value)
+        {
+            string version = (value ?? "").Trim();
+            if (Regex.IsMatch(version, "^\\d+\\.\\d+$") && !versions.Contains(version))
+            {
+                versions.Add(version);
+            }
+        }
+
+        private static int CountTargetLanguageEntries(string rootDir, string[] targetLanguageFolders)
+        {
+            int count = 0;
+            try
+            {
+                foreach (string targetLanguageFolder in targetLanguageFolders ?? new string[0])
+                {
+                    string safeFolder = SafeFolderName(targetLanguageFolder);
+                    if (String.IsNullOrEmpty(safeFolder))
+                    {
+                        continue;
+                    }
+                    string languageRoot = Path.Combine(rootDir, "Languages", safeFolder);
+                    if (!Directory.Exists(languageRoot))
+                    {
+                        continue;
+                    }
+                    foreach (string file in Directory.EnumerateFiles(languageRoot, "*.xml", SearchOption.AllDirectories).Where(p => !IsWordInfoPath(p)))
+                    {
+                        count += CountLanguageDataEntries(file);
+                        if (count > 0)
+                        {
+                            return count;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+            }
+            return count;
+        }
+
+        private static string SafeFolderName(string folder)
+        {
+            string value = (folder ?? "").Trim();
+            return Regex.IsMatch(value, "^[A-Za-z0-9_ -]+$") ? value : "";
+        }
+
+        private static bool IsWordInfoPath(string path)
+        {
+            return path.IndexOf(Path.DirectorySeparatorChar + "WordInfo" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) >= 0
+                || path.IndexOf(Path.AltDirectorySeparatorChar + "WordInfo" + Path.AltDirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static int CountLanguageDataEntries(string path)
+        {
+            try
+            {
+                XmlDocument document = new XmlDocument();
+                document.XmlResolver = null;
+                document.Load(path);
+                XmlNode root = document.DocumentElement;
+                if (root == null || root.Name != "LanguageData") return 0;
+                return CountTextLeaves(root);
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        private static int CountTextLeaves(XmlNode node)
+        {
+            int count = 0;
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (child.NodeType != XmlNodeType.Element) continue;
+                bool hasElementChild = false;
+                foreach (XmlNode grandChild in child.ChildNodes)
+                {
+                    if (grandChild.NodeType == XmlNodeType.Element)
+                    {
+                        hasElementChild = true;
+                        break;
+                    }
+                }
+                count += hasElementChild ? CountTextLeaves(child) : (String.IsNullOrEmpty(child.InnerText) ? 0 : 1);
+            }
+            return count;
         }
 
         private void DrawDraft(Rect view, ref float y, ContributionDraft draft, int index, float visibleTop, float visibleBottom)
@@ -378,7 +833,7 @@ namespace FindModTranslations
                     continue;
                 }
 
-                int languageEntries = candidate.active ? info.builtInTargetLanguageEntries : ActiveModIndex.CountTargetLanguageEntries(info, languageFolders);
+                int languageEntries = info.builtInTargetLanguageEntries;
                 bool looksLikeTranslation = LooksLikeTranslation(info);
                 if (languageEntries <= 0 && !looksLikeTranslation)
                 {
@@ -462,6 +917,7 @@ namespace FindModTranslations
             return new ContributionDraft
             {
                 included = true,
+                manual = true,
                 reason = "FMT_Contribution_ReasonManual".Translate().ToString()
             };
         }
@@ -697,6 +1153,7 @@ namespace FindModTranslations
         private class ContributionDraft
         {
             public bool included;
+            public bool manual;
             public string reason = "";
             public string sourceName = "";
             public string sourcePackageId = "";

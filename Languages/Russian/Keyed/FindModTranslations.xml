@@ -43,7 +43,11 @@
 	<FMT_Window_ActiveBadge>активен</FMT_Window_ActiveBadge>
 	<FMT_Contribution_OpenButton>Добавить переводы</FMT_Contribution_OpenButton>
 	<FMT_Contribution_Title>Добавить переводы в базу</FMT_Contribution_Title>
-	<FMT_Contribution_Intro>Добавьте переводы для {0}. Окно проверяет только уже активные моды, чтобы открываться быстро; если Steam ID или URL не определились автоматически, заполните их вручную.</FMT_Contribution_Intro>
+	<FMT_Contribution_Intro>Добавьте переводы для {0}. Окно сначала открывается, затем сканирует файлы установленных модов в фоне; его можно закрыть во время сканирования.</FMT_Contribution_Intro>
+	<FMT_Contribution_Scanning>Идет фоновое сканирование метаданных установленных модов. Окно можно безопасно закрыть.</FMT_Contribution_Scanning>
+	<FMT_Contribution_ScanComplete>Сканирование метаданных завершено. Найденные строки заполнены автоматически, где это возможно.</FMT_Contribution_ScanComplete>
+	<FMT_Contribution_ScanFailed>Сканирование метаданных не удалось: {0}. Ручные строки остаются доступными.</FMT_Contribution_ScanFailed>
+	<FMT_Contribution_ScanWaiting>Сканирование метаданных ожидает запуска. Ручные строки остаются доступными.</FMT_Contribution_ScanWaiting>
 	<FMT_Contribution_Detected>Найдено строк: {0}; готово к копированию: {1}</FMT_Contribution_Detected>
 	<FMT_Contribution_Source>Оригинальный мод</FMT_Contribution_Source>
 	<FMT_Contribution_Translation>Мод-перевод</FMT_Contribution_Translation>
