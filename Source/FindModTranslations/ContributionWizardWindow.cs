@@ -18,6 +18,7 @@ namespace FindModTranslations
         private const float RowHeight = 264f;
 
         private readonly List<ContributionDraft> drafts;
+        private readonly ExistingSourceIndex existingSources;
         private readonly string languageDisplayName;
         private readonly string[] languageFolders;
         private readonly object scanLock = new object();
@@ -26,7 +27,6 @@ namespace FindModTranslations
         private volatile bool scanComplete;
         private volatile bool scanCancelled;
         private volatile bool activeScanStarted;
-        private volatile bool installedScanRequested;
         private volatile string scanError;
         private ActiveModIndex pendingScanIndex;
 
@@ -36,6 +36,7 @@ namespace FindModTranslations
         {
             languageDisplayName = database == null ? LanguageTarget.CurrentFolder() : database.LanguageDisplayName;
             languageFolders = database == null ? LanguageTarget.CandidateFolders(LanguageTarget.CurrentFolder()) : database.EffectiveLanguageFolders();
+            existingSources = new ExistingSourceIndex(database);
             drafts = new List<ContributionDraft> { ManualDraft() };
 
             doCloseX = true;
@@ -85,11 +86,6 @@ namespace FindModTranslations
             {
                 OpenGithub();
             }
-            if (Widgets.ButtonText(new Rect(buttons.x + 440f, buttons.y, 186f, 34f), "FMT_Contribution_ScanInstalled".Translate()))
-            {
-                activeScanStarted = true;
-                StartBackgroundScan(SnapshotActiveMods(), includeInstalledRoots: true);
-            }
             if (Widgets.ButtonText(new Rect(buttons.xMax - 118f, buttons.y, 118f, 34f), "FMT_Window_Close".Translate()))
             {
                 Close();
@@ -98,7 +94,7 @@ namespace FindModTranslations
             if (!activeScanStarted && !scanInProgress)
             {
                 activeScanStarted = true;
-                StartBackgroundScan(SnapshotActiveMods(), includeInstalledRoots: false);
+                StartBackgroundScan(SnapshotActiveMods());
             }
         }
 
@@ -114,7 +110,7 @@ namespace FindModTranslations
             if (scanInProgress)
             {
                 GUI.color = new Color(0.72f, 0.78f, 0.86f, 1f);
-                Widgets.Label(rect, (installedScanRequested ? "FMT_Contribution_ScanningInstalled" : "FMT_Contribution_ScanningActive").Translate());
+                Widgets.Label(rect, "FMT_Contribution_ScanningActive".Translate());
             }
             else if (!scanError.NullOrEmpty())
             {
@@ -168,7 +164,7 @@ namespace FindModTranslations
             return result;
         }
 
-        private void StartBackgroundScan(List<ActiveModInfo> activeSnapshot, bool includeInstalledRoots)
+        private void StartBackgroundScan(List<ActiveModInfo> activeSnapshot)
         {
             if (scanInProgress)
             {
@@ -177,12 +173,11 @@ namespace FindModTranslations
             scanError = null;
             scanInProgress = true;
             scanComplete = false;
-            installedScanRequested = includeInstalledRoots;
             ThreadPool.QueueUserWorkItem(delegate
             {
                 try
                 {
-                    ActiveModIndex index = BuildFilesystemIndex(activeSnapshot, languageFolders, includeInstalledRoots, IsScanCancelled);
+                    ActiveModIndex index = BuildFilesystemIndex(activeSnapshot, languageFolders, IsScanCancelled);
                     if (IsScanCancelled())
                     {
                         return;
@@ -212,10 +207,9 @@ namespace FindModTranslations
             return scanCancelled;
         }
 
-        private static ActiveModIndex BuildFilesystemIndex(List<ActiveModInfo> activeSnapshot, string[] targetLanguageFolders, bool includeInstalledRoots, Func<bool> cancelled)
+        private static ActiveModIndex BuildFilesystemIndex(List<ActiveModInfo> activeSnapshot, string[] targetLanguageFolders, Func<bool> cancelled)
         {
             ActiveModIndex index = new ActiveModIndex();
-            Dictionary<string, ActiveModInfo> installedByIdentity = new Dictionary<string, ActiveModInfo>();
             foreach (ActiveModInfo active in activeSnapshot ?? new List<ActiveModInfo>())
             {
                 if (cancelled()) return index;
@@ -233,25 +227,8 @@ namespace FindModTranslations
                     info.packageId = active.packageId;
                 }
                 index.mods.Add(info);
-                AddInstalledCandidate(installedByIdentity, info);
                 SleepIfContinuing(cancelled);
             }
-
-            if (!includeInstalledRoots)
-            {
-                index.installedMods = installedByIdentity.Values.ToList();
-                return index;
-            }
-
-            foreach (string root in InstalledRootsFromSnapshot(activeSnapshot, cancelled))
-            {
-                if (cancelled()) return index;
-                ActiveModInfo info = FilesystemModInfo(root, targetLanguageFolders);
-                AddInstalledCandidate(installedByIdentity, info);
-                SleepIfContinuing(cancelled);
-            }
-
-            index.installedMods = installedByIdentity.Values.ToList();
             return index;
         }
 
@@ -275,73 +252,6 @@ namespace FindModTranslations
                 builtInTargetLanguageEntries = source == null ? 0 : source.builtInTargetLanguageEntries,
                 hasBuiltInTargetLanguage = source != null && source.hasBuiltInTargetLanguage
             };
-        }
-
-        private static IEnumerable<string> InstalledRootsFromSnapshot(List<ActiveModInfo> activeSnapshot, Func<bool> cancelled)
-        {
-            HashSet<string> parents = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (ActiveModInfo mod in activeSnapshot ?? new List<ActiveModInfo>())
-            {
-                if (cancelled()) yield break;
-                string root = mod == null ? "" : mod.rootDir;
-                if (String.IsNullOrEmpty(root))
-                {
-                    continue;
-                }
-
-                string normalized = root.Replace('\\', '/');
-                Match workshop = Regex.Match(normalized, @"^(.*?/workshop/content/294100)/\d{6,}(?:/|$)", RegexOptions.IgnoreCase);
-                if (workshop.Success)
-                {
-                    parents.Add(workshop.Groups[1].Value);
-                    continue;
-                }
-
-                DirectoryInfo parent = Directory.GetParent(root);
-                if (parent != null)
-                {
-                    parents.Add(parent.FullName);
-                }
-            }
-
-            foreach (string parent in parents)
-            {
-                if (cancelled()) yield break;
-                if (String.IsNullOrEmpty(parent) || !Directory.Exists(parent))
-                {
-                    continue;
-                }
-                string[] dirs;
-                try
-                {
-                    dirs = Directory.GetDirectories(parent);
-                }
-                catch
-                {
-                    continue;
-                }
-                foreach (string dir in dirs)
-                {
-                    if (cancelled()) yield break;
-                    if (File.Exists(Path.Combine(dir, "About", "About.xml")))
-                    {
-                        yield return dir;
-                    }
-                }
-            }
-        }
-
-        private static void AddInstalledCandidate(Dictionary<string, ActiveModInfo> installedByIdentity, ActiveModInfo info)
-        {
-            if (installedByIdentity == null || info == null)
-            {
-                return;
-            }
-            string identity = CandidateIdentity(info);
-            if (!String.IsNullOrEmpty(identity) && !installedByIdentity.ContainsKey(identity))
-            {
-                installedByIdentity.Add(identity, info);
-            }
         }
 
         private static ActiveModInfo FilesystemModInfo(string rootDir, string[] targetLanguageFolders)
@@ -879,6 +789,12 @@ namespace FindModTranslations
                 }
 
                 SourceSuggestion suggestion = BestSourceFor(candidate, sourceCandidates);
+                ActiveModInfo source = suggestion == null ? info : suggestion.candidate.info;
+                if (existingSources.Contains(source))
+                {
+                    continue;
+                }
+
                 bool included = looksLikeTranslation || suggestion != null;
                 result.Add(DraftFrom(candidate, suggestion, languageEntries, looksLikeTranslation, included));
             }
@@ -899,10 +815,6 @@ namespace FindModTranslations
             foreach (ActiveModInfo mod in activeIndex.mods)
             {
                 AddCandidate(result, seen, mod, true);
-            }
-            foreach (ActiveModInfo mod in activeIndex.installedMods)
-            {
-                AddCandidate(result, seen, mod, false);
             }
             return result;
         }
@@ -1224,6 +1136,66 @@ namespace FindModTranslations
             {
                 this.candidate = candidate;
                 this.score = score;
+            }
+        }
+
+        private class ExistingSourceIndex
+        {
+            private readonly HashSet<string> steamIds = new HashSet<string>();
+            private readonly HashSet<string> packageIds = new HashSet<string>();
+            private readonly HashSet<string> namesWithoutStrongIdentity = new HashSet<string>();
+
+            public ExistingSourceIndex(TranslationDatabase database)
+            {
+                foreach (ModTranslationEntry entry in database == null || database.mods == null ? new ModTranslationEntry[0] : database.mods)
+                {
+                    if (entry == null)
+                    {
+                        continue;
+                    }
+
+                    string steamId = DigitsOnly(entry.steamId);
+                    string packageId = ActiveModIndex.SafeLower(entry.packageId);
+                    if (!steamId.NullOrEmpty())
+                    {
+                        steamIds.Add(steamId);
+                    }
+                    if (!packageId.NullOrEmpty())
+                    {
+                        packageIds.Add(packageId);
+                    }
+                    if (steamId.NullOrEmpty() && packageId.NullOrEmpty())
+                    {
+                        string name = ActiveModIndex.SafeLower(entry.name);
+                        if (!name.NullOrEmpty())
+                        {
+                            namesWithoutStrongIdentity.Add(name);
+                        }
+                    }
+                }
+            }
+
+            public bool Contains(ActiveModInfo info)
+            {
+                if (info == null)
+                {
+                    return false;
+                }
+
+                string steamId = DigitsOnly(info.steamId);
+                if (!steamId.NullOrEmpty())
+                {
+                    return steamIds.Contains(steamId);
+                }
+
+                string packageId = ActiveModIndex.SafeLower(info.packageId);
+                if (!packageId.NullOrEmpty())
+                {
+                    return packageIds.Contains(packageId);
+                }
+
+                string name = ActiveModIndex.SafeLower(info.name);
+                return !name.NullOrEmpty() && namesWithoutStrongIdentity.Contains(name);
             }
         }
     }

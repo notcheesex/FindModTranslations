@@ -43,9 +43,8 @@
 	<FMT_Window_ActiveBadge>active</FMT_Window_ActiveBadge>
 	<FMT_Contribution_OpenButton>Contribute translations</FMT_Contribution_OpenButton>
 	<FMT_Contribution_Title>Contribute translations</FMT_Contribution_Title>
-	<FMT_Contribution_Intro>Add translations for {0}. The window opens first, then scans active mod files in the background; you can close it while scanning.</FMT_Contribution_Intro>
+	<FMT_Contribution_Intro>Add translations for {0}. The window opens first, then scans only active mod files in the background; you can close it while scanning.</FMT_Contribution_Intro>
 	<FMT_Contribution_ScanningActive>Scanning active mod metadata in the background. You can close this window safely.</FMT_Contribution_ScanningActive>
-	<FMT_Contribution_ScanningInstalled>Scanning installed mod metadata in the background. This can take a while; you can close this window safely.</FMT_Contribution_ScanningInstalled>
 	<FMT_Contribution_ScanComplete>Metadata scan complete. Detected rows were filled automatically where possible.</FMT_Contribution_ScanComplete>
 	<FMT_Contribution_ScanFailed>Metadata scan failed: {0}. Manual rows remain usable.</FMT_Contribution_ScanFailed>
 	<FMT_Contribution_ScanWaiting>Metadata scan is waiting to start. Manual rows remain usable.</FMT_Contribution_ScanWaiting>
@@ -63,7 +62,6 @@
 	<FMT_Contribution_AddManual>Add manual row</FMT_Contribution_AddManual>
 	<FMT_Contribution_CopyJson>Copy JSON</FMT_Contribution_CopyJson>
 	<FMT_Contribution_OpenGithub>Open GitHub</FMT_Contribution_OpenGithub>
-	<FMT_Contribution_ScanInstalled>Scan installed mods</FMT_Contribution_ScanInstalled>
 	<FMT_Contribution_Included>Included</FMT_Contribution_Included>
 	<FMT_Contribution_Skipped>Skipped</FMT_Contribution_Skipped>
 	<FMT_Contribution_ReasonLanguageAndName>Detected by {0} {1} language entries and a translation-like name/packageId.</FMT_Contribution_ReasonLanguageAndName>

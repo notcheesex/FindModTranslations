@@ -43,9 +43,8 @@
 	<FMT_Window_ActiveBadge>активен</FMT_Window_ActiveBadge>
 	<FMT_Contribution_OpenButton>Добавить переводы</FMT_Contribution_OpenButton>
 	<FMT_Contribution_Title>Добавить переводы в базу</FMT_Contribution_Title>
-	<FMT_Contribution_Intro>Добавьте переводы для {0}. Окно сначала открывается, затем сканирует файлы активных модов в фоне; его можно закрыть во время сканирования.</FMT_Contribution_Intro>
+	<FMT_Contribution_Intro>Добавьте переводы для {0}. Окно сначала открывается, затем сканирует только файлы активных модов в фоне; его можно закрыть во время сканирования.</FMT_Contribution_Intro>
 	<FMT_Contribution_ScanningActive>Идет фоновое сканирование метаданных активных модов. Окно можно безопасно закрыть.</FMT_Contribution_ScanningActive>
-	<FMT_Contribution_ScanningInstalled>Идет фоновое сканирование метаданных установленных модов. Это может занять время; окно можно безопасно закрыть.</FMT_Contribution_ScanningInstalled>
 	<FMT_Contribution_ScanComplete>Сканирование метаданных завершено. Найденные строки заполнены автоматически, где это возможно.</FMT_Contribution_ScanComplete>
 	<FMT_Contribution_ScanFailed>Сканирование метаданных не удалось: {0}. Ручные строки остаются доступными.</FMT_Contribution_ScanFailed>
 	<FMT_Contribution_ScanWaiting>Сканирование метаданных ожидает запуска. Ручные строки остаются доступными.</FMT_Contribution_ScanWaiting>
@@ -63,7 +62,6 @@
 	<FMT_Contribution_AddManual>Добавить строку</FMT_Contribution_AddManual>
 	<FMT_Contribution_CopyJson>Копировать JSON</FMT_Contribution_CopyJson>
 	<FMT_Contribution_OpenGithub>Открыть GitHub</FMT_Contribution_OpenGithub>
-	<FMT_Contribution_ScanInstalled>Сканировать установленные</FMT_Contribution_ScanInstalled>
 	<FMT_Contribution_Included>Включено</FMT_Contribution_Included>
 	<FMT_Contribution_Skipped>Пропущено</FMT_Contribution_Skipped>
 	<FMT_Contribution_ReasonLanguageAndName>Найдено по {0} записям языка {1} и названию/packageId, похожим на перевод.</FMT_Contribution_ReasonLanguageAndName>
