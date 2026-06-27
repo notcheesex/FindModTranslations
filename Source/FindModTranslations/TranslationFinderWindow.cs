@@ -253,11 +253,30 @@ namespace FindModTranslations
             y += 90f;
             if (expandedMatch)
             {
-                foreach (TranslationModInfo alt in match.entry.alternatives)
+                foreach (TranslationModInfo alt in SortedAlternatives(match))
                 {
                     DrawAlternative(view, ref y, match, alt, visibleTop, visibleBottom);
                 }
             }
+        }
+
+        private static IEnumerable<TranslationModInfo> SortedAlternatives(TranslationMatch match)
+        {
+            if (match == null || match.entry == null || match.entry.alternatives == null)
+            {
+                yield break;
+            }
+            foreach (TranslationModInfo alt in match.entry.alternatives.OrderBy(a => AlternativeSortRank(match, a)).ThenBy(a => a == null ? "" : a.name))
+            {
+                yield return alt;
+            }
+        }
+
+        private static int AlternativeSortRank(TranslationMatch match, TranslationModInfo alt)
+        {
+            if (SameTranslation(alt, match == null ? null : match.activeAlternative)) return 0;
+            if (SameTranslation(alt, match == null ? null : match.installedAlternative)) return 1;
+            return 2;
         }
 
         private void DrawAlternative(Rect view, ref float y, TranslationMatch match, TranslationModInfo alt, float visibleTop, float visibleBottom)
@@ -320,20 +339,24 @@ namespace FindModTranslations
         private static bool IconButton(Rect rect, Texture2D icon, string fallback)
         {
             bool clicked = Widgets.ButtonInvisible(rect);
+            Color saved = GUI.color;
             if (Mouse.IsOver(rect))
             {
                 Widgets.DrawHighlight(rect);
             }
             if (icon != null)
             {
-                GUI.DrawTexture(rect.ContractedBy(2f), icon, ScaleMode.ScaleToFit, true);
+                GUI.color = Color.white;
+                GUI.DrawTexture(rect.ContractedBy(fallback == "Steam" ? 4f : 3f), icon, ScaleMode.ScaleToFit, true);
             }
             else
             {
                 Text.Anchor = TextAnchor.MiddleCenter;
+                GUI.color = Color.white;
                 Widgets.Label(rect, fallback);
                 Text.Anchor = TextAnchor.UpperLeft;
             }
+            GUI.color = saved;
             return clicked;
         }
 
@@ -408,6 +431,10 @@ namespace FindModTranslations
             {
                 if (!match.translationInstalled && match.entry != null && match.entry.translation != null)
                 {
+                    if (match.activeAlternative != null)
+                    {
+                        continue;
+                    }
                     string url = SteamUrlTools.UrlFor(match.entry.translation);
                     if (!url.NullOrEmpty())
                     {

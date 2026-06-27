@@ -150,10 +150,11 @@ namespace FindModTranslations
         private static int StatusSortRank(TranslationMatch match)
         {
             if (match == null) return 99;
+            if (match.activeAlternative != null) return 3;
             if (!match.translationInstalled && match.installedAlternative == null) return 0;
             if (match.translationInstalled) return 1;
             if (match.installedAlternative != null) return 2;
-            return 3;
+            return 4;
         }
 
     }

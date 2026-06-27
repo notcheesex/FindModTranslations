@@ -34,8 +34,9 @@ namespace FindModTranslations
 
         public ContributionWizardWindow(TranslationDatabase database)
         {
-            languageDisplayName = database == null ? LanguageTarget.CurrentFolder() : database.LanguageDisplayName;
-            languageFolders = database == null ? LanguageTarget.CandidateFolders(LanguageTarget.CurrentFolder()) : database.EffectiveLanguageFolders();
+            string activeLanguage = LanguageTarget.CurrentFolder();
+            languageDisplayName = activeLanguage;
+            languageFolders = LanguageTarget.CandidateFolders(activeLanguage);
             existingSources = new ExistingSourceIndex(database);
             drafts = new List<ContributionDraft> { ManualDraft() };
 
@@ -767,7 +768,7 @@ namespace FindModTranslations
         private List<ContributionDraft> BuildDrafts(ActiveModIndex activeIndex)
         {
             List<ContributionCandidate> candidates = AllModCandidates(activeIndex);
-            List<ContributionCandidate> sourceCandidates = candidates.Where(c => !IsIgnoredMod(c.info)).ToList();
+            List<ContributionCandidate> sourceCandidates = candidates.Where(c => !IsIgnoredMod(c.info) && !LooksLikeTranslation(c.info)).ToList();
             List<ContributionDraft> result = new List<ContributionDraft>();
             HashSet<string> seen = new HashSet<string>();
 
@@ -787,19 +788,23 @@ namespace FindModTranslations
 
                 int languageEntries = info.builtInTargetLanguageEntries;
                 bool looksLikeTranslation = LooksLikeTranslation(info);
-                if (languageEntries <= 0 && !looksLikeTranslation)
+                if (!looksLikeTranslation)
                 {
                     continue;
                 }
 
                 SourceSuggestion suggestion = BestSourceFor(candidate, sourceCandidates);
+                if (suggestion == null)
+                {
+                    continue;
+                }
                 ActiveModInfo source = suggestion == null ? info : suggestion.candidate.info;
                 if (existingSources.Contains(source))
                 {
                     continue;
                 }
 
-                bool included = looksLikeTranslation || suggestion != null;
+                bool included = IsConfidentSuggestion(suggestion);
                 result.Add(DraftFrom(candidate, suggestion, languageEntries, looksLikeTranslation, included));
             }
 
@@ -948,10 +953,15 @@ namespace FindModTranslations
             return score;
         }
 
+        private static bool IsConfidentSuggestion(SourceSuggestion suggestion)
+        {
+            return suggestion != null && suggestion.score >= 55;
+        }
+
         private bool LooksLikeTranslation(ActiveModInfo mod)
         {
             HashSet<string> tokens = new HashSet<string>(Tokens((mod == null ? "" : mod.name) + " " + (mod == null ? "" : mod.packageId)));
-            foreach (string token in TranslationMarkerTokens())
+            foreach (string token in ActiveLanguageMarkerTokens())
             {
                 if (tokens.Contains(token))
                 {
@@ -984,14 +994,14 @@ namespace FindModTranslations
             yield return "localization";
             yield return "localisation";
             yield return "language";
-            yield return "russian";
-            yield return "русский";
-            yield return "русская";
-            yield return "рус";
-            yield return "перевод";
-            yield return "переводы";
-            yield return "ru";
+            foreach (string token in ActiveLanguageMarkerTokens())
+            {
+                yield return token;
+            }
+        }
 
+        private IEnumerable<string> ActiveLanguageMarkerTokens()
+        {
             foreach (string folder in languageFolders ?? new string[0])
             {
                 foreach (string token in Tokens(folder))
@@ -1009,6 +1019,33 @@ namespace FindModTranslations
                     yield return token;
                 }
             }
+            if (ActiveLanguageIsRussian())
+            {
+                yield return "russian";
+                yield return "rus";
+                yield return "ru";
+                yield return "русский";
+                yield return "русская";
+                yield return "рус";
+                yield return "перевод";
+                yield return "переводы";
+            }
+        }
+
+        private bool ActiveLanguageIsRussian()
+        {
+            if (LanguageTarget.EquivalentFolder(languageDisplayName, "Russian"))
+            {
+                return true;
+            }
+            foreach (string folder in languageFolders ?? new string[0])
+            {
+                if (LanguageTarget.EquivalentFolder(folder, "Russian"))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private static IEnumerable<string> Tokens(string text)
