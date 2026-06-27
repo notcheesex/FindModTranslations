@@ -51,7 +51,7 @@ namespace FindModTranslations
                 }
 
                 bool translationActive = activeIndex.ContainsActiveTranslation(entry.translation);
-                if (translationActive || (activeAlternative != null && ignoreActiveAlternatives))
+                if (translationActive || activeAlternative != null)
                 {
                     continue;
                 }
