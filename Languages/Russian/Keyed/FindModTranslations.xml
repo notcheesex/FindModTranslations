@@ -16,7 +16,7 @@
 	<FMT_Window_Found>Найдены переводы для активных модов: {0}</FMT_Window_Found>
 	<FMT_Window_CopyFullList>Скопировать весь список</FMT_Window_CopyFullList>
 	<FMT_Window_OpenAll>Открыть все</FMT_Window_OpenAll>
-	<FMT_Window_OpenAllConfirm>Будет открыто {0} вкладок с неустановленными переводами. Продолжить?</FMT_Window_OpenAllConfirm>
+	<FMT_Window_OpenAllConfirm>Будет открыто {0} вкладок с неустановленными переводами. Steam может временно ограничить запросы после открытия множества вкладок одновременно. Продолжить?</FMT_Window_OpenAllConfirm>
 	<FMT_Window_OpenAllConfirmYes>Открыть</FMT_Window_OpenAllConfirmYes>
 	<FMT_Message_NoNotInstalled>Нет ссылок на неустановленные переводы.</FMT_Message_NoNotInstalled>
 	<FMT_Window_Close>Закрыть</FMT_Window_Close>

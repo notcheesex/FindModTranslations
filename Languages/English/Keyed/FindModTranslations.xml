@@ -16,7 +16,7 @@
 	<FMT_Window_Found>Found translations for active mods: {0}</FMT_Window_Found>
 	<FMT_Window_CopyFullList>Copy full list</FMT_Window_CopyFullList>
 	<FMT_Window_OpenAll>Open all</FMT_Window_OpenAll>
-	<FMT_Window_OpenAllConfirm>This will open {0} browser tabs for translations that are not installed. Continue?</FMT_Window_OpenAllConfirm>
+	<FMT_Window_OpenAllConfirm>This will open {0} browser tabs for translations that are not installed. Steam may temporarily rate-limit you after many tabs open at once. Continue?</FMT_Window_OpenAllConfirm>
 	<FMT_Window_OpenAllConfirmYes>Open</FMT_Window_OpenAllConfirmYes>
 	<FMT_Message_NoNotInstalled>No not-installed translation links to open.</FMT_Message_NoNotInstalled>
 	<FMT_Window_Close>Close</FMT_Window_Close>
