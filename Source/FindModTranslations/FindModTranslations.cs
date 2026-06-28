@@ -60,15 +60,6 @@ namespace FindModTranslations
             {
                 ShowWindow(autoOpened: false);
             }
-            if (listing.ButtonText("FMT_Settings_CheckNow".Translate()))
-            {
-                RemoteDatabase.ForceRefresh(LanguageTarget.CurrentFolder());
-                ShowWindow(autoOpened: false);
-            }
-            if (listing.ButtonText("FMT_Contribution_OpenButton".Translate()))
-            {
-                ShowContributionWizard();
-            }
             listing.Gap(8f);
             listing.Label(DatabaseStatusText());
             listing.End();
