@@ -3,6 +3,7 @@
 	<FMT_Settings_ShowOnStartup>Показывать найденные переводы после запуска</FMT_Settings_ShowOnStartup>
 	<FMT_Settings_IgnoreActiveAlternatives>Игнорировать активные альтернативные переводы</FMT_Settings_IgnoreActiveAlternatives>
 	<FMT_Settings_OnlyShowWhenFound>Показывать автоматически только если что-то найдено</FMT_Settings_OnlyShowWhenFound>
+	<FMT_Settings_OpenWindow>Открыть окно переводов</FMT_Settings_OpenWindow>
 	<FMT_Settings_CheckNow>Проверить активные моды сейчас</FMT_Settings_CheckNow>
 	<FMT_Settings_DatabaseNotLoaded>не загружена</FMT_Settings_DatabaseNotLoaded>
 	<FMT_Settings_DatabaseUnavailableForLanguage>Нет базы для языка: {0}</FMT_Settings_DatabaseUnavailableForLanguage>
@@ -21,7 +22,7 @@
 	<FMT_Message_NoNotInstalled>Нет ссылок на неустановленные переводы.</FMT_Message_NoNotInstalled>
 	<FMT_Window_Close>Закрыть</FMT_Window_Close>
 	<FMT_Window_NoMatchesBody>База загружена, но ни одна запись не совпала с текущим списком активных модов.</FMT_Window_NoMatchesBody>
-	<FMT_Window_NoLanguageDatabaseBody>Для текущего языка ({0}) база переводов не найдена.</FMT_Window_NoLanguageDatabaseBody>
+	<FMT_Window_NoLanguageDatabaseBody>Для текущего языка ({0}) база переводов не найдена. Вы все равно можете открыть добавление переводов и сгенерировать JSON-фрагменты для новой базы.</FMT_Window_NoLanguageDatabaseBody>
 	<FMT_Window_Translation>Перевод: {0}</FMT_Window_Translation>
 	<FMT_Window_Open>Открыть</FMT_Window_Open>
 	<FMT_Window_Copy>Копировать ссылку</FMT_Window_Copy>

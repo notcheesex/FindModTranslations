@@ -3,6 +3,7 @@
 	<FMT_Settings_ShowOnStartup>Show found translations after startup</FMT_Settings_ShowOnStartup>
 	<FMT_Settings_IgnoreActiveAlternatives>Ignore active alternative translations</FMT_Settings_IgnoreActiveAlternatives>
 	<FMT_Settings_OnlyShowWhenFound>Only auto-show when at least one translation is found</FMT_Settings_OnlyShowWhenFound>
+	<FMT_Settings_OpenWindow>Open translation window</FMT_Settings_OpenWindow>
 	<FMT_Settings_CheckNow>Check active mods now</FMT_Settings_CheckNow>
 	<FMT_Settings_DatabaseNotLoaded>not loaded</FMT_Settings_DatabaseNotLoaded>
 	<FMT_Settings_DatabaseUnavailableForLanguage>No database for language: {0}</FMT_Settings_DatabaseUnavailableForLanguage>
@@ -21,7 +22,7 @@
 	<FMT_Message_NoNotInstalled>No not-installed translation links to open.</FMT_Message_NoNotInstalled>
 	<FMT_Window_Close>Close</FMT_Window_Close>
 	<FMT_Window_NoMatchesBody>The database loaded, but none of its entries matched the current active mod list.</FMT_Window_NoMatchesBody>
-	<FMT_Window_NoLanguageDatabaseBody>No translation database was found for the current language ({0}).</FMT_Window_NoLanguageDatabaseBody>
+	<FMT_Window_NoLanguageDatabaseBody>No translation database was found for the current language ({0}). You can still use Contribute translations to generate JSON snippets for a new database.</FMT_Window_NoLanguageDatabaseBody>
 	<FMT_Window_Translation>Translation: {0}</FMT_Window_Translation>
 	<FMT_Window_Open>Open</FMT_Window_Open>
 	<FMT_Window_Copy>Copy link</FMT_Window_Copy>

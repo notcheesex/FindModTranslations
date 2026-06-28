@@ -56,6 +56,10 @@ namespace FindModTranslations
             listing.CheckboxLabeled("FMT_Settings_OnlyShowWhenFound".Translate(), ref Settings.onlyShowWhenFound);
             listing.CheckboxLabeled("FMT_Settings_IgnoreActiveAlternatives".Translate(), ref Settings.ignoreActiveAlternatives);
             listing.Gap(8f);
+            if (listing.ButtonText("FMT_Settings_OpenWindow".Translate()))
+            {
+                ShowWindow(autoOpened: false);
+            }
             if (listing.ButtonText("FMT_Settings_CheckNow".Translate()))
             {
                 RemoteDatabase.ForceRefresh(LanguageTarget.CurrentFolder());
