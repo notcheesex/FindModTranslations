@@ -15,7 +15,7 @@ namespace FindModTranslations
     public class ConfirmOpenLinksDialog : Window
     {
         private readonly List<string> urls;
-        public override Vector2 InitialSize => new Vector2(520f, 150f);
+        public override Vector2 InitialSize => new Vector2(520f, 175f);
 
         public ConfirmOpenLinksDialog(List<string> urls)
         {
@@ -27,7 +27,7 @@ namespace FindModTranslations
         public override void DoWindowContents(Rect inRect)
         {
             Text.Font = GameFont.Small;
-            Widgets.Label(new Rect(inRect.x, inRect.y, inRect.width, 50f), "FMT_Window_OpenAllConfirm".Translate(urls.Count));
+            Widgets.Label(new Rect(inRect.x, inRect.y, inRect.width, inRect.height - 48f), "FMT_Window_OpenAllConfirm".Translate(urls.Count));
             float y = inRect.yMax - 38f;
             if (Widgets.ButtonText(new Rect(inRect.xMax - 250f, y, 115f, 34f), "FMT_Window_OpenAllConfirmYes".Translate()))
             {
