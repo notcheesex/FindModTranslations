@@ -20,6 +20,8 @@
     <RimWorldManagedDir Condition="'$(RimWorldManagedDir)' == ''">$(RimWorldRoot)\RimWorldWin64_Data\Managed</RimWorldManagedDir>
     <HarmonyDll Condition="'$(HarmonyDll)' == '' And Exists('..\..\References\0Harmony.dll')">..\..\References\0Harmony.dll</HarmonyDll>
     <HarmonyDll Condition="'$(HarmonyDll)' == ''">C:\Program Files (x86)\Steam\steamapps\workshop\content\294100\2009463077\Current\Assemblies\0Harmony.dll</HarmonyDll>
+    <SteamworksDll Condition="'$(SteamworksDll)' == '' And Exists('..\..\References\com.rlabrecque.steamworks.net.dll')">..\..\References\com.rlabrecque.steamworks.net.dll</SteamworksDll>
+    <SteamworksDll Condition="'$(SteamworksDll)' == ''">$(RimWorldManagedDir)\com.rlabrecque.steamworks.net.dll</SteamworksDll>
     <AssemblyCSharpDll Condition="'$(AssemblyCSharpDll)' == '' And Exists('..\..\References\Assembly-CSharp.dll')">..\..\References\Assembly-CSharp.dll</AssemblyCSharpDll>
     <AssemblyCSharpDll Condition="'$(AssemblyCSharpDll)' == ''">$(RimWorldManagedDir)\Assembly-CSharp.dll</AssemblyCSharpDll>
     <UnityEngineDir Condition="'$(UnityEngineDir)' == '' And Exists('..\..\References\UnityEngine.CoreModule.dll')">..\..\References</UnityEngineDir>
@@ -28,6 +30,7 @@
 
   <ItemGroup>
     <Reference Include="0Harmony"><HintPath>$(HarmonyDll)</HintPath><Private>false</Private></Reference>
+    <Reference Include="com.rlabrecque.steamworks.net"><HintPath>$(SteamworksDll)</HintPath><Private>false</Private></Reference>
     <Reference Include="Assembly-CSharp"><HintPath>$(AssemblyCSharpDll)</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(UnityEngineDir)\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.IMGUIModule"><HintPath>$(UnityEngineDir)\UnityEngine.IMGUIModule.dll</HintPath><Private>false</Private></Reference>

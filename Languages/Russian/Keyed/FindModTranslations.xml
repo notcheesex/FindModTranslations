@@ -17,9 +17,12 @@
 	<FMT_Window_Found>Найдены переводы для активных модов: {0}</FMT_Window_Found>
 	<FMT_Window_CopyFullList>Скопировать весь список</FMT_Window_CopyFullList>
 	<FMT_Window_OpenAll>Открыть все</FMT_Window_OpenAll>
+	<FMT_Window_SubscribeAll>Подписаться на все</FMT_Window_SubscribeAll>
+	<FMT_Window_RestartEnableHint>Включите переводы и перезагрузите игру после подписки на них.</FMT_Window_RestartEnableHint>
 	<FMT_Window_OpenAllConfirm>Будет открыто {0} вкладок с неустановленными переводами. Steam может временно ограничить запросы после открытия множества вкладок одновременно. Продолжить?</FMT_Window_OpenAllConfirm>
 	<FMT_Window_OpenAllConfirmYes>Открыть</FMT_Window_OpenAllConfirmYes>
 	<FMT_Message_NoNotInstalled>Нет ссылок на неустановленные переводы.</FMT_Message_NoNotInstalled>
+	<FMT_Message_NoSubscribableTranslations>Нет новых переводов для подписки.</FMT_Message_NoSubscribableTranslations>
 	<FMT_Window_Close>Закрыть</FMT_Window_Close>
 	<FMT_Window_NoMatchesBody>База загружена, но ни одна запись не совпала с текущим списком активных модов.</FMT_Window_NoMatchesBody>
 	<FMT_Window_NoLanguageDatabaseBody>Для текущего языка ({0}) база переводов не найдена. Вы все равно можете открыть добавление переводов и сгенерировать JSON-фрагменты для новой базы.</FMT_Window_NoLanguageDatabaseBody>
@@ -27,10 +30,23 @@
 	<FMT_Window_Open>Открыть</FMT_Window_Open>
 	<FMT_Window_Copy>Копировать ссылку</FMT_Window_Copy>
 	<FMT_Window_CopyShort>Коп.</FMT_Window_CopyShort>
+	<FMT_Window_Subscribe>Подписаться в Steam Workshop</FMT_Window_Subscribe>
+	<FMT_Window_SubscribeUnavailable>Подписка через Steam Workshop доступна только в Steam-версии игры, если Steam уже запущен.</FMT_Window_SubscribeUnavailable>
+	<FMT_Window_SubscribeInvalidId>У этого перевода нет правильного Steam Workshop ID.</FMT_Window_SubscribeInvalidId>
+	<FMT_Window_SubscribeInstalled>Вы уже подписаны, перевод установлен.</FMT_Window_SubscribeInstalled>
+	<FMT_Window_SubscribeDownloading>Steam уже скачивает этот перевод.</FMT_Window_SubscribeDownloading>
+	<FMT_Window_SubscribeSubscribed>Вы уже подписаны. Нажмите, чтобы начать скачивание.</FMT_Window_SubscribeSubscribed>
 	<FMT_Window_Alternatives>Альтернативы: {0}</FMT_Window_Alternatives>
 	<FMT_Window_AlternativesButton>Альтернативы</FMT_Window_AlternativesButton>
 	<FMT_Message_ListCopied>Список переводов скопирован в буфер обмена.</FMT_Message_ListCopied>
 	<FMT_Message_LinkCopied>Ссылка скопирована в буфер обмена.</FMT_Message_LinkCopied>
+	<FMT_Message_SubscribeRequested>Отправлен запрос на подписку в Steam Workshop.</FMT_Message_SubscribeRequested>
+	<FMT_Message_SubscribeAllRequested>Отправлены запросы на подписку: {0}</FMT_Message_SubscribeAllRequested>
+	<FMT_Message_SubscribeUnavailable>Подписка через Steam Workshop доступна только в Steam-версии игры, если Steam уже запущен.</FMT_Message_SubscribeUnavailable>
+	<FMT_Message_SubscribeInvalidId>У этого перевода нет правильного Steam Workshop ID.</FMT_Message_SubscribeInvalidId>
+	<FMT_Message_SubscribeAlreadySubscribed>Вы уже подписаны. Скачивание через Steam запрошено.</FMT_Message_SubscribeAlreadySubscribed>
+	<FMT_Message_SubscribeInstalled>Вы уже подписаны, перевод установлен.</FMT_Message_SubscribeInstalled>
+	<FMT_Message_SubscribeDownloading>Steam уже скачивает этот перевод.</FMT_Message_SubscribeDownloading>
 	<FMT_Copy_Header>Find Mod Translations</FMT_Copy_Header>
 	<FMT_Copy_Found>Найдено переводов: {0}</FMT_Copy_Found>
 	<FMT_Copy_Translation>Перевод: {0}</FMT_Copy_Translation>

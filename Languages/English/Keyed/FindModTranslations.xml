@@ -17,9 +17,12 @@
 	<FMT_Window_Found>Found translations for active mods: {0}</FMT_Window_Found>
 	<FMT_Window_CopyFullList>Copy full list</FMT_Window_CopyFullList>
 	<FMT_Window_OpenAll>Open all</FMT_Window_OpenAll>
+	<FMT_Window_SubscribeAll>Subscribe all</FMT_Window_SubscribeAll>
+	<FMT_Window_RestartEnableHint>Enable translations and restart the game after subscribing to them.</FMT_Window_RestartEnableHint>
 	<FMT_Window_OpenAllConfirm>This will open {0} browser tabs for translations that are not installed. Steam may temporarily rate-limit you after many tabs open at once. Continue?</FMT_Window_OpenAllConfirm>
 	<FMT_Window_OpenAllConfirmYes>Open</FMT_Window_OpenAllConfirmYes>
 	<FMT_Message_NoNotInstalled>No not-installed translation links to open.</FMT_Message_NoNotInstalled>
+	<FMT_Message_NoSubscribableTranslations>No new translations to subscribe to.</FMT_Message_NoSubscribableTranslations>
 	<FMT_Window_Close>Close</FMT_Window_Close>
 	<FMT_Window_NoMatchesBody>The database loaded, but none of its entries matched the current active mod list.</FMT_Window_NoMatchesBody>
 	<FMT_Window_NoLanguageDatabaseBody>No translation database was found for the current language ({0}). You can still use Contribute translations to generate JSON snippets for a new database.</FMT_Window_NoLanguageDatabaseBody>
@@ -27,10 +30,23 @@
 	<FMT_Window_Open>Open</FMT_Window_Open>
 	<FMT_Window_Copy>Copy link</FMT_Window_Copy>
 	<FMT_Window_CopyShort>Copy</FMT_Window_CopyShort>
+	<FMT_Window_Subscribe>Subscribe on Steam Workshop</FMT_Window_Subscribe>
+	<FMT_Window_SubscribeUnavailable>Steam Workshop subscription is available only in the Steam version when Steam is initialized.</FMT_Window_SubscribeUnavailable>
+	<FMT_Window_SubscribeInvalidId>This translation has no valid Steam Workshop ID.</FMT_Window_SubscribeInvalidId>
+	<FMT_Window_SubscribeInstalled>Already subscribed and installed.</FMT_Window_SubscribeInstalled>
+	<FMT_Window_SubscribeDownloading>Steam is downloading this item.</FMT_Window_SubscribeDownloading>
+	<FMT_Window_SubscribeSubscribed>Already subscribed. Click to request download.</FMT_Window_SubscribeSubscribed>
 	<FMT_Window_Alternatives>Alternatives: {0}</FMT_Window_Alternatives>
 	<FMT_Window_AlternativesButton>Alternatives</FMT_Window_AlternativesButton>
 	<FMT_Message_ListCopied>Translation list copied to clipboard.</FMT_Message_ListCopied>
 	<FMT_Message_LinkCopied>Link copied to clipboard.</FMT_Message_LinkCopied>
+	<FMT_Message_SubscribeRequested>Steam Workshop subscription requested.</FMT_Message_SubscribeRequested>
+	<FMT_Message_SubscribeAllRequested>Steam Workshop subscriptions requested: {0}</FMT_Message_SubscribeAllRequested>
+	<FMT_Message_SubscribeUnavailable>Steam Workshop subscription is available only in the Steam version when Steam is initialized.</FMT_Message_SubscribeUnavailable>
+	<FMT_Message_SubscribeInvalidId>This translation has no valid Steam Workshop ID.</FMT_Message_SubscribeInvalidId>
+	<FMT_Message_SubscribeAlreadySubscribed>Already subscribed. Steam download was requested.</FMT_Message_SubscribeAlreadySubscribed>
+	<FMT_Message_SubscribeInstalled>Already subscribed and installed.</FMT_Message_SubscribeInstalled>
+	<FMT_Message_SubscribeDownloading>Steam is already downloading this item.</FMT_Message_SubscribeDownloading>
 	<FMT_Copy_Header>Find Mod Translations</FMT_Copy_Header>
 	<FMT_Copy_Found>Found translations: {0}</FMT_Copy_Found>
 	<FMT_Copy_Translation>Translation: {0}</FMT_Copy_Translation>

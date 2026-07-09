@@ -49,6 +49,7 @@ namespace FindModTranslations
     {
         private static readonly Texture2D SteamIcon = ContentFinder<Texture2D>.Get("UI/Steam", false);
         private static readonly Texture2D CopyIcon = ContentFinder<Texture2D>.Get("UI/Copy", false);
+        private static readonly Texture2D SubscribeIcon = ContentFinder<Texture2D>.Get("UI/Subscribe", false);
         private readonly List<TranslationMatch> matches;
         private readonly TranslationDatabase database;
         private Vector2 scroll;
@@ -74,9 +75,11 @@ namespace FindModTranslations
                 ? "FMT_Window_NoneFound".Translate()
                 : "FMT_Window_Found".Translate(matches.Count);
             Widgets.Label(new Rect(inRect.x, inRect.y + 38f, inRect.width, 24f), summary);
+            bool showRestartHint = matches.Count > 0;
 
             Rect buttons = new Rect(inRect.x, inRect.yMax - 42f, inRect.width, 38f);
-            if (Widgets.ButtonText(new Rect(buttons.x, buttons.y, 210f, 34f), "FMT_Window_CopyFullList".Translate()))
+            float buttonX = buttons.x;
+            if (Widgets.ButtonText(new Rect(buttonX, buttons.y, 175f, 34f), "FMT_Window_CopyFullList".Translate()))
             {
                 string copyText = BuildCopyText();
                 if (copyText.NullOrEmpty())
@@ -89,7 +92,8 @@ namespace FindModTranslations
                     Messages.Message("FMT_Message_ListCopied".Translate(), MessageTypeDefOf.TaskCompletion, false);
                 }
             }
-            if (Widgets.ButtonText(new Rect(buttons.x + 220f, buttons.y, 150f, 34f), "FMT_Window_OpenAll".Translate()))
+            buttonX += 183f;
+            if (Widgets.ButtonText(new Rect(buttonX, buttons.y, 105f, 34f), "FMT_Window_OpenAll".Translate()))
             {
                 List<string> urls = NotInstalledUrls();
                 if (urls.Count == 0)
@@ -101,16 +105,33 @@ namespace FindModTranslations
                     Find.WindowStack.Add(new ConfirmOpenLinksDialog(urls));
                 }
             }
-            if (Widgets.ButtonText(new Rect(buttons.x + 380f, buttons.y, 220f, 34f), "FMT_Contribution_OpenButton".Translate()))
+            buttonX += 113f;
+            if (SteamSubscribeTools.Available)
+            {
+                if (Widgets.ButtonText(new Rect(buttonX, buttons.y, 150f, 34f), "FMT_Window_SubscribeAll".Translate()))
+                {
+                    SubscribeAll();
+                }
+                buttonX += 158f;
+            }
+            if (Widgets.ButtonText(new Rect(buttonX, buttons.y, 165f, 34f), "FMT_Contribution_OpenButton".Translate()))
             {
                 FindModTranslationsMod.ShowContributionWizard();
             }
-            if (Widgets.ButtonText(new Rect(buttons.xMax - 120f, buttons.y, 120f, 34f), "FMT_Window_Close".Translate()))
+            if (Widgets.ButtonText(new Rect(buttons.xMax - 105f, buttons.y, 105f, 34f), "FMT_Window_Close".Translate()))
             {
                 Close();
             }
 
-            Rect viewOuter = new Rect(inRect.x, inRect.y + 70f, inRect.width, inRect.height - 118f);
+            if (showRestartHint)
+            {
+                Color savedColor = GUI.color;
+                GUI.color = new Color(1f, 0.86f, 0.45f, 1f);
+                Widgets.Label(new Rect(inRect.x, inRect.yMax - 66f, inRect.width, 22f), "FMT_Window_RestartEnableHint".Translate());
+                GUI.color = savedColor;
+            }
+
+            Rect viewOuter = new Rect(inRect.x, inRect.y + 70f, inRect.width, inRect.height - (showRestartHint ? 142f : 118f));
             float height = Math.Max(viewOuter.height - 20f, ListHeight(viewOuter.height));
             Rect view = new Rect(0f, 0f, viewOuter.width - 18f, height);
             Widgets.BeginScrollView(viewOuter, ref scroll, view);
@@ -200,7 +221,7 @@ namespace FindModTranslations
             }
 
             float left = box.x + 14f;
-            float rightColWidth = 126f;
+            float rightColWidth = 166f;
             float contentRight = box.xMax - rightColWidth - 12f;
             float contentWidth = contentRight - left;
 
@@ -223,6 +244,9 @@ namespace FindModTranslations
             GUI.color = new Color(0.56f, 0.61f, 0.68f, 1f);
             DrawClippedLabel(new Rect(versionRect.xMax + 12f, y + 54f, contentRight - versionRect.xMax - 12f, 20f), translation.author);
             GUI.color = savedColor;
+
+            Rect subscribeRect = new Rect(box.xMax - 122f, y + 19f, 28f, 28f);
+            DrawSubscribeButton(subscribeRect, translation);
 
             Rect openRect = new Rect(box.xMax - 82f, y + 19f, 28f, 28f);
             Rect copyRect = new Rect(box.xMax - 42f, y + 21f, 24f, 24f);
@@ -303,7 +327,7 @@ namespace FindModTranslations
 
             if (Mouse.IsOver(row)) Widgets.DrawHighlight(row);
             GUI.color = new Color(0.72f, 0.78f, 0.86f, 1f);
-            Rect versionRect = new Rect(row.xMax - 132f, row.y + 4f, 42f, 22f);
+            Rect versionRect = new Rect(row.xMax - 164f, row.y + 4f, 42f, 22f);
             Rect badgeRect = new Rect(row.x + 250f, row.y + 4f, installed || active ? 88f : 0f, 22f);
             Rect authorRect = new Rect(row.x + (installed || active ? 346f : 250f), row.y + 4f, Math.Max(0f, versionRect.x - row.x - (installed || active ? 354f : 258f)), 22f);
             Widgets.Label(new Rect(row.x + 8f, row.y + 4f, 236f, 22f), alt.name);
@@ -315,8 +339,10 @@ namespace FindModTranslations
             GUI.color = new Color(0.56f, 0.61f, 0.68f, 1f);
             DrawClippedLabel(authorRect, alt.author);
             DrawVersions(versionRect, alt.gameVersions);
+            Rect subscribeRect = new Rect(row.xMax - 110f, row.y + 3f, 22f, 22f);
             Rect openRect = new Rect(row.xMax - 78f, row.y + 3f, 22f, 22f);
             Rect copyRect = new Rect(row.xMax - 42f, row.y + 4f, 20f, 20f);
+            DrawSubscribeButton(subscribeRect, alt);
             if (IconButton(openRect, SteamIcon, "Steam")) OpenTranslation(alt);
             if (IconButton(copyRect, CopyIcon, "Copy"))
             {
@@ -334,6 +360,69 @@ namespace FindModTranslations
             if (!a.steamId.NullOrEmpty() && a.steamId == b.steamId) return true;
             if (!a.packageId.NullOrEmpty() && ActiveModIndex.SafeLower(a.packageId) == ActiveModIndex.SafeLower(b.packageId)) return true;
             return false;
+        }
+
+        private static void DrawSubscribeButton(Rect rect, TranslationModInfo translation)
+        {
+            SteamSubscribeStatus status = SteamSubscribeTools.StatusFor(translation);
+            if (status != SteamSubscribeStatus.NotSubscribed)
+            {
+                return;
+            }
+
+            bool clicked = Widgets.ButtonInvisible(rect);
+            if (Mouse.IsOver(rect))
+            {
+                Widgets.DrawHighlight(rect);
+            }
+
+            if (SubscribeIcon != null)
+            {
+                GUI.DrawTexture(rect, SubscribeIcon, ScaleMode.ScaleToFit, true);
+            }
+
+            TooltipHandler.TipRegion(rect, "FMT_Window_Subscribe".Translate());
+            if (clicked)
+            {
+                HandleSubscribeClick(translation);
+            }
+        }
+
+        private static void HandleSubscribeClick(TranslationModInfo translation)
+        {
+            bool requested = SteamSubscribeTools.TrySubscribe(translation, out SteamSubscribeStatus status);
+            if (requested)
+            {
+                Messages.Message("FMT_Message_SubscribeRequested".Translate(), MessageTypeDefOf.TaskCompletion, false);
+                return;
+            }
+            string key;
+            MessageTypeDef messageType = MessageTypeDefOf.RejectInput;
+            switch (status)
+            {
+                case SteamSubscribeStatus.Unavailable:
+                    key = "FMT_Message_SubscribeUnavailable";
+                    break;
+                case SteamSubscribeStatus.InvalidId:
+                    key = "FMT_Message_SubscribeInvalidId";
+                    break;
+                case SteamSubscribeStatus.Installed:
+                    key = "FMT_Message_SubscribeInstalled";
+                    messageType = MessageTypeDefOf.NeutralEvent;
+                    break;
+                case SteamSubscribeStatus.Downloading:
+                    key = "FMT_Message_SubscribeDownloading";
+                    messageType = MessageTypeDefOf.NeutralEvent;
+                    break;
+                case SteamSubscribeStatus.Subscribed:
+                    key = "FMT_Message_SubscribeAlreadySubscribed";
+                    messageType = MessageTypeDefOf.NeutralEvent;
+                    break;
+                default:
+                    key = "FMT_Message_SubscribeUnavailable";
+                    break;
+            }
+            Messages.Message(key.Translate(), messageType, false);
         }
 
         private static bool IconButton(Rect rect, Texture2D icon, string fallback)
@@ -448,6 +537,48 @@ namespace FindModTranslations
         private string BuildCopyText()
         {
             return string.Join("\n", NotInstalledUrls().ToArray());
+        }
+
+        private IEnumerable<TranslationModInfo> SubscribeAllCandidates()
+        {
+            HashSet<string> seen = new HashSet<string>();
+            foreach (TranslationMatch match in matches)
+            {
+                if (match.translationInstalled || match.activeAlternative != null || match.entry == null || match.entry.translation == null)
+                {
+                    continue;
+                }
+                TranslationModInfo translation = match.entry.translation;
+                if (SteamSubscribeTools.StatusFor(translation) != SteamSubscribeStatus.NotSubscribed)
+                {
+                    continue;
+                }
+                string key = !translation.steamId.NullOrEmpty() ? translation.steamId : SteamUrlTools.UrlFor(translation);
+                if (!key.NullOrEmpty() && seen.Add(key))
+                {
+                    yield return translation;
+                }
+            }
+        }
+
+        private void SubscribeAll()
+        {
+            int requested = 0;
+            foreach (TranslationModInfo translation in SubscribeAllCandidates())
+            {
+                if (SteamSubscribeTools.TrySubscribe(translation, out SteamSubscribeStatus _))
+                {
+                    requested++;
+                }
+            }
+            if (requested == 0)
+            {
+                Messages.Message("FMT_Message_NoSubscribableTranslations".Translate(), MessageTypeDefOf.RejectInput, false);
+            }
+            else
+            {
+                Messages.Message("FMT_Message_SubscribeAllRequested".Translate(requested), MessageTypeDefOf.TaskCompletion, false);
+            }
         }
 
         private static void OpenTranslation(TranslationModInfo translation)
